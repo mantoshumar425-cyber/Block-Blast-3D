@@ -1,11 +1,7 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
-import React, { useRef, useEffect } from 'react';
-import { GridCell, Piece } from '../types/game';
+import React from 'react';
+import { GridCell, Piece, BoardTheme } from '../types/game';
 import { GridBlockCell } from './BlockPiece';
+import { BOARD_THEMES, STATIC_THEME_PARTICLES } from '../utils/themes';
 
 interface GameBoardProps {
   grid: (GridCell | null)[][];
@@ -17,6 +13,7 @@ interface GameBoardProps {
   onCellClick: (row: number, col: number) => void;
   boardRef: React.RefObject<HTMLDivElement | null>;
   shake: boolean;
+  theme?: BoardTheme;
 }
 
 export const GameBoard: React.FC<GameBoardProps> = ({
@@ -29,8 +26,9 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   onCellClick,
   boardRef,
   shake,
+  theme = 'midnight',
 }) => {
-  const gridSize = grid.length;
+  const themeConfig = BOARD_THEMES[theme] || BOARD_THEMES.midnight;
 
   // Build a lookup for ghost cells
   const isGhostCell = (r: number, c: number): boolean => {
@@ -51,7 +49,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   return (
     <div
       ref={boardRef}
-      className={`relative p-2.5 sm:p-3 rounded-2xl bg-[#0b101c]/90 border border-slate-800/90 shadow-[0_12px_40px_rgba(0,0,0,0.7)] select-none touch-none transition-transform duration-75 ${
+      className={`relative p-2.5 sm:p-3 rounded-2xl ${themeConfig.boardBg} border ${themeConfig.boardBorder} ${themeConfig.boardShadow} select-none touch-none transition-all duration-300 ${
         shake ? 'animate-shake' : ''
       }`}
       style={{
@@ -60,17 +58,44 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         aspectRatio: '1 / 1',
       }}
     >
+      {/* Subtle Ambient Gradient Layer */}
+      <div
+        className="absolute inset-0 rounded-2xl pointer-events-none transition-all duration-500"
+        style={{
+          background: themeConfig.ambientGrad,
+        }}
+      />
+
+      {/* Subtle Theme Floating Particles Background Layer */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-2xl">
+        {STATIC_THEME_PARTICLES.map((particle) => (
+          <div
+            key={particle.id}
+            className={`absolute rounded-full ${themeConfig.particleClass} pointer-events-none`}
+            style={{
+              left: `${particle.left}%`,
+              top: `${particle.top}%`,
+              width: `${particle.size}px`,
+              height: `${particle.size}px`,
+              backgroundColor: themeConfig.particleColor,
+              animationDelay: `${particle.delay}s`,
+              animationDuration: `${particle.duration}s`,
+            }}
+          />
+        ))}
+      </div>
+
       {/* Subtle outer glow on combo or highlight */}
       <div
         className={`absolute inset-0 rounded-2xl pointer-events-none transition-opacity duration-300 ${
           highlightedRows.length > 0 || highlightedCols.length > 0
-            ? 'opacity-100 ring-2 ring-cyan-400/80 shadow-[0_0_24px_rgba(6,182,212,0.4)]'
+            ? `opacity-100 ring-2 ${themeConfig.highlightGlow}`
             : 'opacity-0'
         }`}
       />
 
       {/* 8x8 Grid */}
-      <div className="grid grid-cols-8 grid-rows-8 gap-1 sm:gap-1.5 w-full h-full">
+      <div className="relative z-10 grid grid-cols-8 grid-rows-8 gap-1 sm:gap-1.5 w-full h-full">
         {grid.map((row, r) =>
           row.map((cell, c) => {
             const ghost = isGhostCell(r, c);
@@ -90,6 +115,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                   <GridBlockCell
                     colorKey={activePiece.colorKey}
                     isGhost={true}
+                    theme={theme}
                   />
                 ) : (
                   <GridBlockCell
@@ -97,6 +123,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                     hasGem={cell?.hasGem}
                     clearing={cell?.clearing}
                     isHighlighted={isLit}
+                    theme={theme}
                   />
                 )}
               </div>
@@ -107,3 +134,4 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     </div>
   );
 };
+

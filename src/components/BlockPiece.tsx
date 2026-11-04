@@ -4,8 +4,9 @@
  */
 
 import React from 'react';
-import { BlockColorKey, Piece } from '../types/game';
+import { BlockColorKey, Piece, BoardTheme } from '../types/game';
 import { COLOR_THEMES } from '../utils/pieces';
+import { BOARD_THEMES } from '../utils/themes';
 
 interface BlockPieceProps {
   piece: Piece;
@@ -92,6 +93,7 @@ interface CellProps {
   isGhost?: boolean;
   isHighlighted?: boolean;
   size?: number;
+  theme?: BoardTheme;
 }
 
 export const GridBlockCell: React.FC<CellProps> = ({
@@ -101,19 +103,22 @@ export const GridBlockCell: React.FC<CellProps> = ({
   isGhost = false,
   isHighlighted = false,
   size,
+  theme = 'midnight',
 }) => {
+  const themeConfig = BOARD_THEMES[theme] || BOARD_THEMES.midnight;
+
   if (!colorKey) {
-    // Empty cell slot
+    // Empty cell slot themed
     return (
       <div
         style={size ? { width: `${size}px`, height: `${size}px` } : undefined}
         className={`w-full h-full rounded-lg transition-colors duration-150 flex items-center justify-center ${
           isHighlighted
-            ? 'bg-cyan-500/25 ring-2 ring-cyan-400 shadow-[inset_0_0_12px_rgba(6,182,212,0.4)]'
-            : 'bg-[#121927] border border-[#1b263b]/70 shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]'
+            ? `${themeConfig.cellEmptyBg} ring-2 ${themeConfig.ringGlow} shadow-[inset_0_0_12px_rgba(255,255,255,0.25)]`
+            : `${themeConfig.cellEmptyBg} border ${themeConfig.cellEmptyBorder} shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]`
         }`}
       >
-        <div className="w-1 h-1 rounded-full bg-slate-800/60" />
+        <div className={`w-1 h-1 rounded-full ${themeConfig.cellDotColor}`} />
       </div>
     );
   }

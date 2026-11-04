@@ -67,3 +67,5 @@ export type SlidebarTab =
   | 'privacy_rights'
   | 'privacy_preference';
 
+export type BoardTheme = 'midnight' | 'neon' | 'solar' | 'emerald';
+

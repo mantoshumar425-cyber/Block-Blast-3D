@@ -17,9 +17,11 @@ import {
   VolumeX,
   Vibrate,
   Menu,
+  Palette,
 } from 'lucide-react';
 import { sounds } from '../utils/audio';
-import { SlidebarTab } from '../types/game';
+import { SlidebarTab, BoardTheme } from '../types/game';
+import { BOARD_THEMES } from '../utils/themes';
 
 interface GameOverModalProps {
   score: number;
