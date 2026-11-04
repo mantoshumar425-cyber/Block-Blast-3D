@@ -694,6 +694,7 @@ export default function App() {
           onOpenStats={() => setShowStats(true)}
           onOpenSettings={() => setShowSettings(true)}
           onOpenSlidebar={handleOpenSlidebar}
+          dailyStreak={dailyStreak}
         />
         {showHowToPlay && <HowToPlayModal onClose={() => setShowHowToPlay(false)} />}
         {showStats && <StatsModal onClose={() => setShowStats(false)} highScore={highScore} />}
