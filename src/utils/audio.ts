@@ -9,12 +9,15 @@
 class SoundManager {
   private ctx: AudioContext | null = null;
   private isMuted: boolean = false;
+  private hapticsEnabled: boolean = true;
 
   constructor() {
     // Check localStorage for mute preference
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('blockblast_muted');
       this.isMuted = saved === 'true';
+      const savedHaptics = localStorage.getItem('blockblast_haptics');
+      this.hapticsEnabled = savedHaptics !== 'false';
     }
   }
 
@@ -40,6 +43,31 @@ class SoundManager {
 
   public getIsMuted(): boolean {
     return this.isMuted;
+  }
+
+  public toggleHaptics(): boolean {
+    this.hapticsEnabled = !this.hapticsEnabled;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('blockblast_haptics', String(this.hapticsEnabled));
+    }
+    return this.hapticsEnabled;
+  }
+
+  public getHapticsEnabled(): boolean {
+    return this.hapticsEnabled;
+  }
+
+  public triggerHaptic(type: 'pickup' | 'place' | 'blast') {
+    if (!this.hapticsEnabled || typeof navigator === 'undefined' || !navigator.vibrate) return;
+    try {
+      if (type === 'pickup') {
+        navigator.vibrate(12);
+      } else if (type === 'place') {
+        navigator.vibrate(22);
+      } else if (type === 'blast') {
+        navigator.vibrate([35, 25, 45]);
+      }
+    } catch {}
   }
 
   public playPickup() {

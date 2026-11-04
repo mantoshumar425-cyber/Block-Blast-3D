@@ -22,6 +22,7 @@ import {
   calculatePlacementScore,
 } from './utils/pieces';
 import { ADVENTURE_LEVELS } from './utils/levels';
+import { getTodayChallenge, markTodayChallengeComplete } from './utils/daily';
 import { TitleScreen } from './components/TitleScreen';
 import { HUD } from './components/HUD';
 import { GameBoard } from './components/GameBoard';
@@ -30,6 +31,9 @@ import { BlockPiece } from './components/BlockPiece';
 import { ParticleCanvas, ParticleTrigger } from './components/ParticleCanvas';
 import { ScorePopups } from './components/ScorePopups';
 import { GameOverModal, PauseModal, VictoryModal } from './components/Modals';
+import { HowToPlayModal } from './components/HowToPlayModal';
+import { StatsModal } from './components/StatsModal';
+import { OfflineIndicator } from './components/OfflineIndicator';
 
 export default function App() {
   // Game state machine
@@ -50,16 +54,25 @@ export default function App() {
   const [maxCombo, setMaxCombo] = useState<number>(0);
   const [linesClearedTotal, setLinesClearedTotal] = useState<number>(0);
 
-  // Audio mute
+  // Second chance revive (1x per run)
+  const [canRevive, setCanRevive] = useState<boolean>(true);
+
+  // Audio & Haptics settings
   const [isMuted, setIsMuted] = useState<boolean>(() => sounds.getIsMuted());
+  const [hapticsEnabled, setHapticsEnabled] = useState<boolean>(() => sounds.getHapticsEnabled());
 
   // Board and piece slots
   const [grid, setGrid] = useState<(GridCell | null)[][]>(() => createEmptyGrid(8));
   const [pieces, setPieces] = useState<(Piece | null)[]>([null, null, null]);
 
-  // Adventure mode state
+  // Adventure & Daily mode state
   const [adventureLevelIndex, setAdventureLevelIndex] = useState<number>(0);
   const [collectedGems, setCollectedGems] = useState<number>(0);
+  const [dailyStreak, setDailyStreak] = useState<number>(0);
+
+  // Modals
+  const [showHowToPlay, setShowHowToPlay] = useState<boolean>(false);
+  const [showStats, setShowStats] = useState<boolean>(false);
 
   // Dragging state
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
@@ -106,16 +119,27 @@ export default function App() {
       setMaxCombo(0);
       setLinesClearedTotal(0);
       setIsNewHigh(false);
+      setCanRevive(true);
       setSelectedPieceIndex(null);
       setDraggingIndex(null);
       setHoverPos(null);
       setHighlightedRows([]);
       setHighlightedCols([]);
 
+      // Career stats: increment games played
+      if (typeof window !== 'undefined') {
+        const games = parseInt(localStorage.getItem('blockblast_games_played') || '0', 10);
+        localStorage.setItem('blockblast_games_played', String(games + 1));
+      }
+
       if (mode === 'classic') {
         const emptyGrid = createEmptyGrid(8);
         setGrid(emptyGrid);
         setPieces(generatePieceBatch(emptyGrid));
+      } else if (mode === 'daily') {
+        const challenge = getTodayChallenge();
+        setGrid(challenge.initialBoard);
+        setPieces(generatePieceBatch(challenge.initialBoard));
       } else {
         // Adventure Level
         const level = ADVENTURE_LEVELS[levelIdx % ADVENTURE_LEVELS.length];
@@ -153,6 +177,53 @@ export default function App() {
     setIsMuted(next);
   };
 
+  // Toggle haptics
+  const handleToggleHaptics = () => {
+    const next = sounds.toggleHaptics();
+    setHapticsEnabled(next);
+  };
+
+  // Second Chance Blast
+  const handleRevive = () => {
+    setCanRevive(false);
+    sounds.playPlace();
+    sounds.triggerHaptic('blast');
+
+    // Clear center 3x3: rows 2..4, cols 2..4
+    const newGrid = grid.map((row, r) =>
+      row.map((cell, c) => {
+        if (r >= 2 && r <= 5 && c >= 2 && c <= 5) {
+          return null;
+        }
+        return cell;
+      })
+    );
+
+    // Particle explosion at center
+    if (boardRef.current) {
+      const boardRect = boardRef.current.getBoundingClientRect();
+      const centerX = boardRect.left + boardRect.width / 2;
+      const centerY = boardRect.top + boardRect.height / 2;
+      setParticleTriggers([
+        { x: centerX, y: centerY, color: '#f59e0b', count: 40, type: 'burst' },
+        { x: centerX, y: centerY, color: '#38bdf8', type: 'ring' },
+      ]);
+    }
+
+    setShake(true);
+    setTimeout(() => setShake(false), 300);
+
+    // Ensure remaining pieces can fit, or refresh tray
+    let activePieces = pieces;
+    if (!hasAnyValidMove(newGrid, activePieces)) {
+      activePieces = generatePieceBatch(newGrid);
+      setPieces(activePieces);
+    }
+
+    setGrid(newGrid);
+    setGameState('PLAYING');
+  };
+
   // Place piece logic
   const handlePlacePiece = useCallback(
     (pieceIndex: number, targetRow: number, targetCol: number) => {
@@ -164,6 +235,7 @@ export default function App() {
       }
 
       sounds.playPlace();
+      sounds.triggerHaptic('place');
 
       // Place blocks on grid
       const newGrid = grid.map((row) => [...row]);
@@ -189,10 +261,29 @@ export default function App() {
       if (totalClears > 0) {
         nextCombo = combo + 1;
         setCombo(nextCombo);
-        setMaxCombo((prev) => Math.max(prev, nextCombo));
-        setLinesClearedTotal((prev) => prev + totalClears);
+        setMaxCombo((prev) => {
+          const updated = Math.max(prev, nextCombo);
+          if (typeof window !== 'undefined') {
+            const stored = parseInt(localStorage.getItem('blockblast_best_combo') || '0', 10);
+            if (updated > stored) {
+              localStorage.setItem('blockblast_best_combo', String(updated));
+            }
+          }
+          return updated;
+        });
+
+        setLinesClearedTotal((prev) => {
+          const updated = prev + totalClears;
+          if (typeof window !== 'undefined') {
+            const stored = parseInt(localStorage.getItem('blockblast_total_lines') || '0', 10);
+            localStorage.setItem('blockblast_total_lines', String(stored + totalClears));
+          }
+          return updated;
+        });
 
         sounds.playLineClear(totalClears, nextCombo);
+        sounds.triggerHaptic('blast');
+
         if (nextCombo > 1) {
           sounds.playComboStreak(nextCombo);
         }
@@ -223,7 +314,7 @@ export default function App() {
               newTriggers.push({
                 x: centerX,
                 y: centerY,
-                color: cell ? cell.colorKey === 'yellow' ? '#fde047' : '#38bdf8' : '#38bdf8',
+                color: cell ? (cell.colorKey === 'yellow' ? '#fde047' : '#38bdf8') : '#38bdf8',
                 count: 12,
                 type: cell?.hasGem ? 'gem' : 'burst',
               });
@@ -261,6 +352,7 @@ export default function App() {
 
           setParticleTriggers(newTriggers);
 
+          // Adventure mode check
           if (gemsBlasted > 0 && gameMode === 'adventure') {
             setCollectedGems((prev) => {
               const updated = prev + gemsBlasted;
@@ -314,7 +406,21 @@ export default function App() {
         scoreGained = piece.blockCount;
       }
 
-      setScore((prev) => prev + scoreGained);
+      const newTotalScore = score + scoreGained;
+      setScore(newTotalScore);
+
+      // Daily mode victory check
+      if (gameMode === 'daily') {
+        const challenge = getTodayChallenge();
+        if (newTotalScore >= challenge.targetScore && !challenge.isCompleted) {
+          const updatedStreak = markTodayChallengeComplete();
+          setDailyStreak(updatedStreak);
+          setTimeout(() => {
+            sounds.playLevelVictory();
+            setGameState('VICTORY');
+          }, 450);
+        }
+      }
 
       // Consume piece from tray
       const nextPieces = [...pieces];
@@ -358,7 +464,7 @@ export default function App() {
       setHighlightedRows([]);
       setHighlightedCols([]);
     },
-    [grid, pieces, combo, gameMode, adventureLevelIndex]
+    [grid, pieces, combo, score, gameMode, adventureLevelIndex]
   );
 
   // Click on cell when a piece is selected
@@ -393,6 +499,7 @@ export default function App() {
     }
 
     sounds.playPickup();
+    sounds.triggerHaptic('pickup');
 
     const isTouch = e.pointerType === 'touch';
     // On touch screens, offset preview upward by 80px so finger doesn't obscure view
@@ -506,17 +613,26 @@ export default function App() {
   // Title Screen view
   if (gameState === 'TITLE_MENU') {
     return (
-      <TitleScreen
-        onStart={(mode) => {
-          setGameMode(mode);
-          initGame(mode, 0);
-        }}
-        highScore={highScore}
-        isMuted={isMuted}
-        onToggleMute={handleToggleMute}
-        selectedMode={gameMode}
-        onSelectMode={setGameMode}
-      />
+      <>
+        <OfflineIndicator />
+        <TitleScreen
+          onStart={(mode) => {
+            setGameMode(mode);
+            initGame(mode, 0);
+          }}
+          highScore={highScore}
+          isMuted={isMuted}
+          onToggleMute={handleToggleMute}
+          hapticsEnabled={hapticsEnabled}
+          onToggleHaptics={handleToggleHaptics}
+          selectedMode={gameMode}
+          onSelectMode={setGameMode}
+          onOpenHowToPlay={() => setShowHowToPlay(true)}
+          onOpenStats={() => setShowStats(true)}
+        />
+        {showHowToPlay && <HowToPlayModal onClose={() => setShowHowToPlay(false)} />}
+        {showStats && <StatsModal onClose={() => setShowStats(false)} highScore={highScore} />}
+      </>
     );
   }
 
@@ -528,7 +644,10 @@ export default function App() {
   const draggedPiece = draggingIndex !== null ? pieces[draggingIndex] : null;
 
   return (
-    <div className="relative w-full h-screen overflow-hidden flex flex-col justify-between items-center p-3 bg-gradient-to-b from-[#090e1b] via-[#0d1527] to-[#070b16] select-none touch-none">
+    <div className="relative w-full h-screen overflow-hidden flex flex-col justify-between items-center p-2 sm:p-3 bg-gradient-to-b from-[#090e1b] via-[#0d1527] to-[#070b16] select-none touch-none">
+      {/* Offline Status Toast */}
+      <OfflineIndicator />
+
       {/* Background Grid Ambience */}
       <div
         className="absolute inset-0 opacity-15 pointer-events-none"
@@ -554,10 +673,12 @@ export default function App() {
         levelNumber={adventureLevelIndex + 1}
         collectedGems={collectedGems}
         targetGems={currentLevel?.targetGems}
+        dailyTargetScore={1200}
         isMuted={isMuted}
         onToggleMute={handleToggleMute}
         onPause={() => setGameState('PAUSED')}
         onRestart={() => initGame(gameMode, adventureLevelIndex)}
+        onHowToPlay={() => setShowHowToPlay(true)}
       />
 
       {/* Center 8x8 Playfield */}
@@ -596,7 +717,6 @@ export default function App() {
             top: `${dragPointerPos.y + dragOffset.y}px`,
           }}
         >
-          {/* Match board cell size for accurate alignment preview */}
           <BlockPiece
             piece={draggedPiece}
             cellSize={boardRef.current ? boardRef.current.clientWidth / 8.6 : 38}
@@ -613,6 +733,8 @@ export default function App() {
           isNewHigh={isNewHigh}
           linesCleared={linesClearedTotal}
           maxCombo={maxCombo}
+          canRevive={canRevive}
+          onRevive={handleRevive}
           onRestart={() => initGame(gameMode, adventureLevelIndex)}
           onHome={() => setGameState('TITLE_MENU')}
         />
@@ -623,6 +745,11 @@ export default function App() {
           onResume={() => setGameState('PLAYING')}
           onRestart={() => initGame(gameMode, adventureLevelIndex)}
           onHome={() => setGameState('TITLE_MENU')}
+          onHowToPlay={() => setShowHowToPlay(true)}
+          isMuted={isMuted}
+          onToggleMute={handleToggleMute}
+          hapticsEnabled={hapticsEnabled}
+          onToggleHaptics={handleToggleHaptics}
         />
       )}
 
@@ -630,6 +757,8 @@ export default function App() {
         <VictoryModal
           score={score}
           levelNumber={adventureLevelIndex + 1}
+          mode={gameMode === 'daily' ? 'daily' : 'adventure'}
+          streakCount={dailyStreak}
           onNextLevel={() => {
             const nextIdx = adventureLevelIndex + 1;
             setAdventureLevelIndex(nextIdx);
@@ -638,6 +767,12 @@ export default function App() {
           onHome={() => setGameState('TITLE_MENU')}
         />
       )}
+
+      {/* How to Play Modal */}
+      {showHowToPlay && <HowToPlayModal onClose={() => setShowHowToPlay(false)} />}
+
+      {/* Lifetime Stats Modal */}
+      {showStats && <StatsModal onClose={() => setShowStats(false)} highScore={highScore} />}
     </div>
   );
 }

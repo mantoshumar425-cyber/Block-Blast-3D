@@ -29,7 +29,7 @@ export interface Piece {
 }
 
 export type GameState = 'TITLE_MENU' | 'PLAYING' | 'PAUSED' | 'GAME_OVER' | 'VICTORY';
-export type GameMode = 'classic' | 'adventure';
+export type GameMode = 'classic' | 'adventure' | 'daily';
 
 export interface ScorePopup {
   id: string;

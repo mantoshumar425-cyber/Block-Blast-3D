@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { GameMode } from '../types/game';
-import { Trophy, Volume2, VolumeX, Pause, RotateCcw, Flame, Sparkles } from 'lucide-react';
+import { Trophy, Volume2, VolumeX, Pause, RotateCcw, Flame, Sparkles, Calendar, HelpCircle } from 'lucide-react';
 import { sounds } from '../utils/audio';
 
 interface HUDProps {
@@ -16,10 +16,12 @@ interface HUDProps {
   levelNumber?: number;
   collectedGems?: number;
   targetGems?: number;
+  dailyTargetScore?: number;
   isMuted: boolean;
   onToggleMute: () => void;
   onPause: () => void;
   onRestart: () => void;
+  onHowToPlay?: () => void;
 }
 
 export const HUD: React.FC<HUDProps> = ({
@@ -30,14 +32,16 @@ export const HUD: React.FC<HUDProps> = ({
   levelNumber,
   collectedGems = 0,
   targetGems = 0,
+  dailyTargetScore = 1200,
   isMuted,
   onToggleMute,
   onPause,
   onRestart,
+  onHowToPlay,
 }) => {
   return (
-    <header className="w-full max-w-md flex flex-col gap-2 z-20 px-2 pt-2">
-      {/* Top Row: Best Score, Quick Action Controls */}
+    <header className="w-full max-w-md flex flex-col gap-2 z-20 px-2 pt-1">
+      {/* Top Row: Best Score, Mode Info, Controls */}
       <div className="flex items-center justify-between text-xs">
         {/* Left: Best Score */}
         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0e1626]/80 border border-slate-800/80 text-amber-400">
@@ -48,7 +52,7 @@ export const HUD: React.FC<HUDProps> = ({
           </span>
         </div>
 
-        {/* Center: Adventure Level or Mode info */}
+        {/* Center: Adventure Level or Daily Goal */}
         {gameMode === 'adventure' && (
           <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-950/60 border border-purple-800/60 text-purple-300 text-xs font-semibold">
             <Sparkles className="w-3.5 h-3.5 text-purple-400 animate-spin" style={{ animationDuration: '6s' }} />
@@ -60,8 +64,29 @@ export const HUD: React.FC<HUDProps> = ({
           </div>
         )}
 
-        {/* Right: Controls (Restart, Mute, Pause) */}
-        <div className="flex items-center gap-1.5">
+        {gameMode === 'daily' && (
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-950/60 border border-amber-800/60 text-amber-300 text-xs font-semibold">
+            <Calendar className="w-3.5 h-3.5 text-amber-400" />
+            <span>Goal: {dailyTargetScore.toLocaleString()}</span>
+          </div>
+        )}
+
+        {/* Right: Controls (Help, Restart, Mute, Pause) */}
+        <div className="flex items-center gap-1">
+          {onHowToPlay && (
+            <button
+              onClick={() => {
+                sounds.playClick();
+                onHowToPlay();
+              }}
+              className="p-2 rounded-lg bg-[#0e1626]/80 border border-slate-800/80 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+              title="How to Play"
+              aria-label="Help"
+            >
+              <HelpCircle className="w-3.5 h-3.5 text-cyan-400" />
+            </button>
+          )}
+
           <button
             onClick={() => {
               sounds.playClick();
