@@ -30,11 +30,14 @@ import { PieceTray } from './components/PieceTray';
 import { BlockPiece } from './components/BlockPiece';
 import { ParticleCanvas, ParticleTrigger } from './components/ParticleCanvas';
 import { ScorePopups } from './components/ScorePopups';
+import { SlidebarTab } from './types/game';
 import { GameOverModal, PauseModal, VictoryModal } from './components/Modals';
 import { HowToPlayModal } from './components/HowToPlayModal';
 import { StatsModal } from './components/StatsModal';
 import { SettingsModal } from './components/SettingsModal';
+import { SlidebarDrawer } from './components/SlidebarDrawer';
 import { OfflineIndicator } from './components/OfflineIndicator';
+import { submitDailyScore } from './utils/dailyLeaderboard';
 
 export default function App() {
   // Game state machine
@@ -72,11 +75,14 @@ export default function App() {
   const [adventureLevelIndex, setAdventureLevelIndex] = useState<number>(0);
   const [collectedGems, setCollectedGems] = useState<number>(0);
   const [dailyStreak, setDailyStreak] = useState<number>(0);
+  const [dailyRank, setDailyRank] = useState<number | null>(null);
 
-  // Modals
+  // Modals & Slidebar Drawer
   const [showHowToPlay, setShowHowToPlay] = useState<boolean>(false);
   const [showStats, setShowStats] = useState<boolean>(false);
   const [showSettings, setShowSettings] = useState<boolean>(false);
+  const [isSlidebarOpen, setIsSlidebarOpen] = useState<boolean>(false);
+  const [slidebarInitialTab, setSlidebarInitialTab] = useState<SlidebarTab>('menu');
 
   // Dragging state
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
@@ -124,6 +130,7 @@ export default function App() {
       setLinesClearedTotal(0);
       setIsNewHigh(false);
       setCanRevive(true);
+      setDailyRank(null);
       setSelectedPieceIndex(null);
       setDraggingIndex(null);
       setHoverPos(null);
@@ -196,6 +203,21 @@ export default function App() {
   const handleSfxVolumeChange = (vol: number) => {
     sounds.setSfxVolume(vol);
     setSfxVolume(vol);
+  };
+
+  // Open Slidebar Drawer
+  const handleOpenSlidebar = (tab: SlidebarTab = 'menu') => {
+    sounds.playClick();
+    setSlidebarInitialTab(tab);
+    setIsSlidebarOpen(true);
+  };
+
+  // Clear all data callback
+  const handleResetAllData = () => {
+    setHighScore(0);
+    setScore(0);
+    setDailyRank(null);
+    initGame('classic', 0);
   };
 
   // Ambient music lifecycle: starts looping in 'PLAYING', ducks in 'PAUSED', stops in menus
@@ -446,6 +468,10 @@ export default function App() {
         if (newTotalScore >= challenge.targetScore && !challenge.isCompleted) {
           const updatedStreak = markTodayChallengeComplete();
           setDailyStreak(updatedStreak);
+          const lbResult = submitDailyScore(newTotalScore);
+          if (lbResult.isTop5) {
+            setDailyRank(lbResult.rank);
+          }
           setTimeout(() => {
             sounds.playLevelVictory();
             setGameState('VICTORY');
@@ -483,6 +509,12 @@ export default function App() {
         // Check Game Over: can ANY remaining piece be placed anywhere?
         const canContinue = hasAnyValidMove(finalizedGrid, activePieces);
         if (!canContinue) {
+          if (gameMode === 'daily') {
+            const lbResult = submitDailyScore(newTotalScore);
+            if (lbResult.isTop5) {
+              setDailyRank(lbResult.rank);
+            }
+          }
           sounds.playGameOver();
           setGameState('GAME_OVER');
         }
@@ -661,6 +693,7 @@ export default function App() {
           onOpenHowToPlay={() => setShowHowToPlay(true)}
           onOpenStats={() => setShowStats(true)}
           onOpenSettings={() => setShowSettings(true)}
+          onOpenSlidebar={handleOpenSlidebar}
         />
         {showHowToPlay && <HowToPlayModal onClose={() => setShowHowToPlay(false)} />}
         {showStats && <StatsModal onClose={() => setShowStats(false)} highScore={highScore} />}
@@ -677,6 +710,12 @@ export default function App() {
             onToggleHaptics={handleToggleHaptics}
           />
         )}
+        <SlidebarDrawer
+          isOpen={isSlidebarOpen}
+          onClose={() => setIsSlidebarOpen(false)}
+          initialTab={slidebarInitialTab}
+          onResetAllData={handleResetAllData}
+        />
       </>
     );
   }
@@ -725,6 +764,7 @@ export default function App() {
         onRestart={() => initGame(gameMode, adventureLevelIndex)}
         onHowToPlay={() => setShowHowToPlay(true)}
         onOpenSettings={() => setShowSettings(true)}
+        onOpenSlidebar={handleOpenSlidebar}
       />
 
       {/* Center 8x8 Playfield */}
@@ -783,6 +823,8 @@ export default function App() {
           onRevive={handleRevive}
           onRestart={() => initGame(gameMode, adventureLevelIndex)}
           onHome={() => setGameState('TITLE_MENU')}
+          dailyRank={dailyRank}
+          onOpenLeaderboard={() => handleOpenSlidebar('leaderboard')}
         />
       )}
 
@@ -800,6 +842,7 @@ export default function App() {
           onMusicVolumeChange={handleMusicVolumeChange}
           sfxVolume={sfxVolume}
           onSfxVolumeChange={handleSfxVolumeChange}
+          onOpenSlidebar={handleOpenSlidebar}
         />
       )}
 
@@ -815,6 +858,8 @@ export default function App() {
             initGame('adventure', nextIdx);
           }}
           onHome={() => setGameState('TITLE_MENU')}
+          dailyRank={dailyRank}
+          onOpenLeaderboard={() => handleOpenSlidebar('leaderboard')}
         />
       )}
 
@@ -838,6 +883,14 @@ export default function App() {
           onToggleHaptics={handleToggleHaptics}
         />
       )}
+
+      {/* Slidebar Drawer */}
+      <SlidebarDrawer
+        isOpen={isSlidebarOpen}
+        onClose={() => setIsSlidebarOpen(false)}
+        initialTab={slidebarInitialTab}
+        onResetAllData={handleResetAllData}
+      />
     </div>
   );
 }

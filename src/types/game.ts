@@ -48,3 +48,22 @@ export interface AdventureLevel {
   targetScore: number;
   initialBoard: (BlockColorKey | 'gem' | null)[][];
 }
+
+export interface DailyScoreEntry {
+  id: string;
+  name: string;
+  score: number;
+  date: string;
+  isUser?: boolean;
+}
+
+export type SlidebarTab =
+  | 'menu'
+  | 'leaderboard'
+  | 'achievement'
+  | 'awards'
+  | 'help'
+  | 'about'
+  | 'privacy_rights'
+  | 'privacy_preference';
+

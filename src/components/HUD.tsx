@@ -5,8 +5,9 @@
 
 import React from 'react';
 import { GameMode } from '../types/game';
-import { Trophy, Volume2, VolumeX, Pause, RotateCcw, Flame, Sparkles, Calendar, HelpCircle, Settings } from 'lucide-react';
+import { Trophy, Volume2, VolumeX, Pause, RotateCcw, Flame, Sparkles, Calendar, HelpCircle, Settings, Menu } from 'lucide-react';
 import { sounds } from '../utils/audio';
+import { SlidebarTab } from '../types/game';
 
 interface HUDProps {
   score: number;
@@ -23,6 +24,7 @@ interface HUDProps {
   onRestart: () => void;
   onHowToPlay?: () => void;
   onOpenSettings?: () => void;
+  onOpenSlidebar?: (tab?: SlidebarTab) => void;
 }
 
 export const HUD: React.FC<HUDProps> = ({
@@ -40,18 +42,35 @@ export const HUD: React.FC<HUDProps> = ({
   onRestart,
   onHowToPlay,
   onOpenSettings,
+  onOpenSlidebar,
 }) => {
   return (
     <header className="w-full max-w-md flex flex-col gap-2 z-20 px-2 pt-1">
       {/* Top Row: Best Score, Mode Info, Controls */}
       <div className="flex items-center justify-between text-xs">
-        {/* Left: Best Score */}
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0e1626]/80 border border-slate-800/80 text-amber-400">
-          <Trophy className="w-3.5 h-3.5 text-amber-400" />
-          <span className="text-slate-400 text-[11px] uppercase tracking-wider">Best</span>
-          <span className="font-bold text-white tabular-nums tracking-wide">
-            {highScore.toLocaleString()}
-          </span>
+        {/* Left: Menu & Best Score */}
+        <div className="flex items-center gap-1.5">
+          {onOpenSlidebar && (
+            <button
+              onClick={() => {
+                sounds.playClick();
+                onOpenSlidebar('menu');
+              }}
+              className="p-1.5 rounded-lg bg-[#0e1626]/80 border border-slate-800/80 text-slate-300 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+              title="Game Menu"
+              aria-label="Menu"
+            >
+              <Menu className="w-3.5 h-3.5 text-cyan-400" />
+            </button>
+          )}
+
+          <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#0e1626]/80 border border-slate-800/80 text-amber-400">
+            <Trophy className="w-3.5 h-3.5 text-amber-400" />
+            <span className="text-slate-400 text-[11px] uppercase tracking-wider hidden sm:inline">Best</span>
+            <span className="font-bold text-white tabular-nums tracking-wide">
+              {highScore.toLocaleString()}
+            </span>
+          </div>
         </div>
 
         {/* Center: Adventure Level or Daily Goal */}

@@ -18,9 +18,11 @@ import {
   BarChart3,
   Vibrate,
   Settings,
+  Menu,
 } from 'lucide-react';
 import { PWAInstallButton } from './PWAInstallButton';
 import { getTodayChallenge } from '../utils/daily';
+import { SlidebarTab } from '../types/game';
 
 interface TitleScreenProps {
   onStart: (mode: GameMode) => void;
@@ -34,6 +36,7 @@ interface TitleScreenProps {
   onOpenHowToPlay: () => void;
   onOpenStats: () => void;
   onOpenSettings: () => void;
+  onOpenSlidebar: (tab?: SlidebarTab) => void;
 }
 
 export const TitleScreen: React.FC<TitleScreenProps> = ({
@@ -48,6 +51,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
   onOpenHowToPlay,
   onOpenStats,
   onOpenSettings,
+  onOpenSlidebar,
 }) => {
   const dailyInfo = getTodayChallenge();
 
@@ -79,6 +83,19 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
       {/* Top perimeter cluster: Best Score, Install Button, Settings */}
       <header className="w-full max-w-4xl flex items-center justify-between z-10 pt-1">
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              sounds.playClick();
+              onOpenSlidebar('menu');
+            }}
+            className="p-2 rounded-lg bg-slate-900/70 border border-slate-800/80 text-slate-300 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-semibold"
+            title="Open Game Menu"
+            aria-label="Menu"
+          >
+            <Menu className="w-4 h-4 text-cyan-400" />
+            <span className="hidden sm:inline">Menu</span>
+          </button>
+
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900/70 border border-slate-800/80 text-amber-400 font-medium text-xs sm:text-sm">
             <Trophy className="w-4 h-4 text-amber-400" />
             <span className="text-slate-400 text-[11px] uppercase tracking-wider hidden sm:inline">Best</span>
@@ -292,10 +309,22 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
             <span>Blast trapped gems across progressive stages. Plan strategic multi-line clears.</span>
           )}
           {selectedMode === 'daily' && (
-            <span className="flex items-center justify-center gap-1.5">
-              <span>{dailyInfo.displayDate} · Target: {dailyInfo.targetScore} pts</span>
-              {dailyInfo.isCompleted && <span className="text-emerald-400 font-bold">(Completed ✓)</span>}
-            </span>
+            <div className="flex flex-col items-center gap-1">
+              <div className="flex items-center justify-center gap-1.5">
+                <span>{dailyInfo.displayDate} · Target: {dailyInfo.targetScore} pts</span>
+                {dailyInfo.isCompleted && <span className="text-emerald-400 font-bold">(Completed ✓)</span>}
+              </div>
+              <button
+                onClick={() => {
+                  sounds.playClick();
+                  onOpenSlidebar('leaderboard');
+                }}
+                className="mt-0.5 inline-flex items-center gap-1 text-[11px] font-bold text-amber-400 hover:text-amber-300 hover:underline cursor-pointer"
+              >
+                <Trophy className="w-3 h-3 text-amber-400" />
+                <span>View Daily Top 5 Scores</span>
+              </button>
+            </div>
           )}
         </div>
 

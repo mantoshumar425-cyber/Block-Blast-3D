@@ -16,8 +16,10 @@ import {
   Volume2,
   VolumeX,
   Vibrate,
+  Menu,
 } from 'lucide-react';
 import { sounds } from '../utils/audio';
+import { SlidebarTab } from '../types/game';
 
 interface GameOverModalProps {
   score: number;
@@ -29,6 +31,8 @@ interface GameOverModalProps {
   onRevive?: () => void;
   onRestart: () => void;
   onHome: () => void;
+  dailyRank?: number | null;
+  onOpenLeaderboard?: () => void;
 }
 
 export const GameOverModal: React.FC<GameOverModalProps> = ({
@@ -41,6 +45,8 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
   onRevive,
   onRestart,
   onHome,
+  dailyRank,
+  onOpenLeaderboard,
 }) => {
   // Listen for Space/Enter to restart
   useEffect(() => {
@@ -84,6 +90,27 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
             </div>
           )}
         </div>
+
+        {/* Daily Top 5 Rank Banner if achieved */}
+        {dailyRank !== undefined && dailyRank !== null && (
+          <div className="w-full p-2.5 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-between text-xs mb-3">
+            <div className="flex items-center gap-1.5 text-amber-300 font-bold">
+              <Trophy className="w-4 h-4 text-amber-400" />
+              <span>Daily Top 5 Rank #{dailyRank}!</span>
+            </div>
+            {onOpenLeaderboard && (
+              <button
+                onClick={() => {
+                  sounds.playClick();
+                  onOpenLeaderboard();
+                }}
+                className="text-amber-400 hover:text-white underline text-[11px] font-semibold cursor-pointer"
+              >
+                View Top 5
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Stats Row */}
         <div className="w-full grid grid-cols-2 gap-2 mb-4">
@@ -156,6 +183,7 @@ interface PauseModalProps {
   onMusicVolumeChange: (vol: number) => void;
   sfxVolume: number;
   onSfxVolumeChange: (vol: number) => void;
+  onOpenSlidebar?: (tab?: SlidebarTab) => void;
 }
 
 export const PauseModal: React.FC<PauseModalProps> = ({
@@ -171,6 +199,7 @@ export const PauseModal: React.FC<PauseModalProps> = ({
   onMusicVolumeChange,
   sfxVolume,
   onSfxVolumeChange,
+  onOpenSlidebar,
 }) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -217,16 +246,29 @@ export const PauseModal: React.FC<PauseModalProps> = ({
               <span>Restart</span>
             </button>
 
-            <button
-              onClick={() => {
-                sounds.playClick();
-                onHowToPlay();
-              }}
-              className="flex-1 py-2 px-3 rounded-xl font-semibold text-xs text-slate-300 bg-slate-800/80 hover:bg-slate-700/80 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <HelpCircle className="w-3.5 h-3.5 text-cyan-400" />
-              <span>How to Play</span>
-            </button>
+            {onOpenSlidebar ? (
+              <button
+                onClick={() => {
+                  sounds.playClick();
+                  onOpenSlidebar('menu');
+                }}
+                className="flex-1 py-2 px-3 rounded-xl font-semibold text-xs text-slate-300 bg-slate-800/80 hover:bg-slate-700/80 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Menu className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Menu</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  sounds.playClick();
+                  onHowToPlay();
+                }}
+                className="flex-1 py-2 px-3 rounded-xl font-semibold text-xs text-slate-300 bg-slate-800/80 hover:bg-slate-700/80 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <HelpCircle className="w-3.5 h-3.5 text-cyan-400" />
+                <span>How to Play</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -324,6 +366,8 @@ interface VictoryModalProps {
   onHome: () => void;
   mode?: 'adventure' | 'daily';
   streakCount?: number;
+  dailyRank?: number | null;
+  onOpenLeaderboard?: () => void;
 }
 
 export const VictoryModal: React.FC<VictoryModalProps> = ({
@@ -333,6 +377,8 @@ export const VictoryModal: React.FC<VictoryModalProps> = ({
   onHome,
   mode = 'adventure',
   streakCount = 1,
+  dailyRank,
+  onOpenLeaderboard,
 }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-fade-in">
@@ -349,6 +395,27 @@ export const VictoryModal: React.FC<VictoryModalProps> = ({
             ? `Daily streak: ${streakCount} ${streakCount === 1 ? 'day' : 'days'}!`
             : `Level ${levelNumber} gems captured!`}
         </p>
+
+        {/* Daily Rank Tag if in Top 5 */}
+        {mode === 'daily' && dailyRank && (
+          <div className="w-full mb-3 py-2 px-3 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-between text-xs text-amber-300">
+            <span className="flex items-center gap-1.5 font-bold">
+              <Trophy className="w-4 h-4 text-amber-400" />
+              <span>Daily Top 5 Rank #{dailyRank}!</span>
+            </span>
+            {onOpenLeaderboard && (
+              <button
+                onClick={() => {
+                  sounds.playClick();
+                  onOpenLeaderboard();
+                }}
+                className="text-[11px] underline font-bold text-amber-200 hover:text-white cursor-pointer"
+              >
+                View Top 5
+              </button>
+            )}
+          </div>
+        )}
 
         <div className="w-full py-3.5 px-4 rounded-2xl bg-slate-900/90 border border-slate-800 mb-4 flex flex-col items-center">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-0.5">
@@ -371,16 +438,30 @@ export const VictoryModal: React.FC<VictoryModalProps> = ({
             <span>NEXT LEVEL</span>
           </button>
         ) : (
-          <button
-            onClick={() => {
-              sounds.playClick();
-              onHome();
-            }}
-            className="w-full py-3 px-4 rounded-xl font-black text-white bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-400 hover:to-cyan-500 shadow-md transform hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer mb-2"
-          >
-            <Home className="w-4 h-4" />
-            <span>RETURN TO MENU</span>
-          </button>
+          <div className="w-full flex flex-col gap-2 mb-2">
+            {onOpenLeaderboard && (
+              <button
+                onClick={() => {
+                  sounds.playClick();
+                  onOpenLeaderboard();
+                }}
+                className="w-full py-2.5 px-4 rounded-xl font-bold text-xs text-amber-300 bg-amber-500/15 border border-amber-500/30 hover:bg-amber-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Trophy className="w-4 h-4 text-amber-400" />
+                <span>VIEW DAILY TOP 5 LEADERBOARD</span>
+              </button>
+            )}
+            <button
+              onClick={() => {
+                sounds.playClick();
+                onHome();
+              }}
+              className="w-full py-3 px-4 rounded-xl font-black text-white bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-400 hover:to-cyan-500 shadow-md transform hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Home className="w-4 h-4" />
+              <span>RETURN TO MENU</span>
+            </button>
+          </div>
         )}
 
         <button
