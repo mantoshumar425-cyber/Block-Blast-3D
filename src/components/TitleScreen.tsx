@@ -17,6 +17,7 @@ import {
   HelpCircle,
   BarChart3,
   Vibrate,
+  Settings,
 } from 'lucide-react';
 import { PWAInstallButton } from './PWAInstallButton';
 import { getTodayChallenge } from '../utils/daily';
@@ -32,6 +33,7 @@ interface TitleScreenProps {
   onSelectMode: (mode: GameMode) => void;
   onOpenHowToPlay: () => void;
   onOpenStats: () => void;
+  onOpenSettings: () => void;
 }
 
 export const TitleScreen: React.FC<TitleScreenProps> = ({
@@ -45,6 +47,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
   onSelectMode,
   onOpenHowToPlay,
   onOpenStats,
+  onOpenSettings,
 }) => {
   const dailyInfo = getTodayChallenge();
 
@@ -122,6 +125,18 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
             aria-label="Haptics"
           >
             <Vibrate className={`w-4 h-4 ${hapticsEnabled ? 'text-cyan-400' : 'text-slate-500'}`} />
+          </button>
+
+          <button
+            onClick={() => {
+              sounds.playClick();
+              onOpenSettings();
+            }}
+            className="p-2 rounded-lg bg-slate-900/60 border border-slate-800/80 text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+            title="Audio & Settings"
+            aria-label="Settings"
+          >
+            <Settings className="w-4 h-4 text-slate-300" />
           </button>
 
           <button

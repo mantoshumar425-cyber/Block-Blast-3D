@@ -152,6 +152,10 @@ interface PauseModalProps {
   onToggleMute: () => void;
   hapticsEnabled: boolean;
   onToggleHaptics: () => void;
+  musicVolume: number;
+  onMusicVolumeChange: (vol: number) => void;
+  sfxVolume: number;
+  onSfxVolumeChange: (vol: number) => void;
 }
 
 export const PauseModal: React.FC<PauseModalProps> = ({
@@ -163,6 +167,10 @@ export const PauseModal: React.FC<PauseModalProps> = ({
   onToggleMute,
   hapticsEnabled,
   onToggleHaptics,
+  musicVolume,
+  onMusicVolumeChange,
+  sfxVolume,
+  onSfxVolumeChange,
 }) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -178,12 +186,13 @@ export const PauseModal: React.FC<PauseModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-fade-in">
-      <div className="w-full max-w-xs rounded-3xl bg-[#0f172a] border border-slate-800 p-6 text-center shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex flex-col items-center">
-        <h2 className="text-2xl font-black tracking-tight text-white mb-1">
+      <div className="w-full max-w-sm rounded-3xl bg-[#0f172a] border border-slate-800 p-6 text-center shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex flex-col items-center">
+        <h2 className="text-2xl font-black tracking-tight text-white mb-0.5">
           PAUSED
         </h2>
-        <p className="text-xs text-slate-400 mb-5">Relax and plan your next blast</p>
+        <p className="text-xs text-slate-400 mb-4">Relax and plan your next blast</p>
 
+        {/* Primary Actions */}
         <div className="w-full flex flex-col gap-2 mb-4">
           <button
             onClick={() => {
@@ -196,37 +205,86 @@ export const PauseModal: React.FC<PauseModalProps> = ({
             <span>Resume</span>
           </button>
 
-          <button
-            onClick={() => {
-              sounds.playClick();
-              onRestart();
-            }}
-            className="w-full py-2.5 px-4 rounded-xl font-semibold text-xs text-slate-300 bg-slate-800/80 hover:bg-slate-700/80 transition-colors flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>Restart Round</span>
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                sounds.playClick();
+                onRestart();
+              }}
+              className="flex-1 py-2 px-3 rounded-xl font-semibold text-xs text-slate-300 bg-slate-800/80 hover:bg-slate-700/80 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Restart</span>
+            </button>
 
-          <button
-            onClick={() => {
-              sounds.playClick();
-              onHowToPlay();
-            }}
-            className="w-full py-2.5 px-4 rounded-xl font-semibold text-xs text-slate-300 bg-slate-800/80 hover:bg-slate-700/80 transition-colors flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <HelpCircle className="w-3.5 h-3.5 text-cyan-400" />
-            <span>How to Play</span>
-          </button>
+            <button
+              onClick={() => {
+                sounds.playClick();
+                onHowToPlay();
+              }}
+              className="flex-1 py-2 px-3 rounded-xl font-semibold text-xs text-slate-300 bg-slate-800/80 hover:bg-slate-700/80 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <HelpCircle className="w-3.5 h-3.5 text-cyan-400" />
+              <span>How to Play</span>
+            </button>
+          </div>
         </div>
 
-        {/* Quick Toggles: Sound & Haptics */}
-        <div className="w-full flex items-center justify-between p-2 rounded-xl bg-slate-900/80 border border-slate-800 mb-4">
+        {/* Independent Volume Controls Card */}
+        <div className="w-full p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 mb-4 space-y-3 text-left">
+          {/* Ambient Music Volume */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="flex items-center gap-1.5 text-xs font-bold text-white">
+                <span className="w-2 h-2 rounded-full bg-cyan-400" />
+                <span>Ambient Music</span>
+              </span>
+              <span className="text-xs font-mono font-bold text-cyan-400 tabular-nums">
+                {Math.round(musicVolume * 100)}%
+              </span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={musicVolume}
+              onChange={(e) => onMusicVolumeChange(parseFloat(e.target.value))}
+              className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+            />
+          </div>
+
+          {/* Sound Effects (SFX) Volume */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="flex items-center gap-1.5 text-xs font-bold text-white">
+                <span className="w-2 h-2 rounded-full bg-amber-400" />
+                <span>Sound FX</span>
+              </span>
+              <span className="text-xs font-mono font-bold text-amber-400 tabular-nums">
+                {Math.round(sfxVolume * 100)}%
+              </span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={sfxVolume}
+              onChange={(e) => onSfxVolumeChange(parseFloat(e.target.value))}
+              className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-400"
+            />
+          </div>
+        </div>
+
+        {/* Quick Toggles: Master Mute & Haptics */}
+        <div className="w-full flex items-center justify-between p-2 rounded-xl bg-slate-900/80 border border-slate-800 mb-3">
           <button
             onClick={() => {
               sounds.playClick();
               onToggleMute();
             }}
-            className="flex-1 flex items-center justify-center gap-1.5 py-1 text-xs font-medium text-slate-300 hover:text-white"
+            className="flex-1 flex items-center justify-center gap-1.5 py-1 text-xs font-medium text-slate-300 hover:text-white cursor-pointer"
           >
             {isMuted ? <VolumeX className="w-3.5 h-3.5 text-rose-400" /> : <Volume2 className="w-3.5 h-3.5 text-cyan-400" />}
             <span>{isMuted ? 'Muted' : 'Sound On'}</span>
@@ -237,7 +295,7 @@ export const PauseModal: React.FC<PauseModalProps> = ({
               sounds.playClick();
               onToggleHaptics();
             }}
-            className="flex-1 flex items-center justify-center gap-1.5 py-1 text-xs font-medium text-slate-300 hover:text-white"
+            className="flex-1 flex items-center justify-center gap-1.5 py-1 text-xs font-medium text-slate-300 hover:text-white cursor-pointer"
           >
             <Vibrate className={`w-3.5 h-3.5 ${hapticsEnabled ? 'text-cyan-400' : 'text-slate-500'}`} />
             <span>{hapticsEnabled ? 'Haptics On' : 'Haptics Off'}</span>

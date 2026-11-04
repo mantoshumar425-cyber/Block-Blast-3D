@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { GameMode } from '../types/game';
-import { Trophy, Volume2, VolumeX, Pause, RotateCcw, Flame, Sparkles, Calendar, HelpCircle } from 'lucide-react';
+import { Trophy, Volume2, VolumeX, Pause, RotateCcw, Flame, Sparkles, Calendar, HelpCircle, Settings } from 'lucide-react';
 import { sounds } from '../utils/audio';
 
 interface HUDProps {
@@ -22,6 +22,7 @@ interface HUDProps {
   onPause: () => void;
   onRestart: () => void;
   onHowToPlay?: () => void;
+  onOpenSettings?: () => void;
 }
 
 export const HUD: React.FC<HUDProps> = ({
@@ -38,6 +39,7 @@ export const HUD: React.FC<HUDProps> = ({
   onPause,
   onRestart,
   onHowToPlay,
+  onOpenSettings,
 }) => {
   return (
     <header className="w-full max-w-md flex flex-col gap-2 z-20 px-2 pt-1">
@@ -98,6 +100,20 @@ export const HUD: React.FC<HUDProps> = ({
           >
             <RotateCcw className="w-3.5 h-3.5" />
           </button>
+
+          {onOpenSettings && (
+            <button
+              onClick={() => {
+                sounds.playClick();
+                onOpenSettings();
+              }}
+              className="p-2 rounded-lg bg-[#0e1626]/80 border border-slate-800/80 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+              title="Audio & Settings"
+              aria-label="Settings"
+            >
+              <Settings className="w-3.5 h-3.5 text-slate-300" />
+            </button>
+          )}
 
           <button
             onClick={() => {

@@ -33,6 +33,7 @@ import { ScorePopups } from './components/ScorePopups';
 import { GameOverModal, PauseModal, VictoryModal } from './components/Modals';
 import { HowToPlayModal } from './components/HowToPlayModal';
 import { StatsModal } from './components/StatsModal';
+import { SettingsModal } from './components/SettingsModal';
 import { OfflineIndicator } from './components/OfflineIndicator';
 
 export default function App() {
@@ -60,6 +61,8 @@ export default function App() {
   // Audio & Haptics settings
   const [isMuted, setIsMuted] = useState<boolean>(() => sounds.getIsMuted());
   const [hapticsEnabled, setHapticsEnabled] = useState<boolean>(() => sounds.getHapticsEnabled());
+  const [musicVolume, setMusicVolume] = useState<number>(() => sounds.getMusicVolume());
+  const [sfxVolume, setSfxVolume] = useState<number>(() => sounds.getSfxVolume());
 
   // Board and piece slots
   const [grid, setGrid] = useState<(GridCell | null)[][]>(() => createEmptyGrid(8));
@@ -73,6 +76,7 @@ export default function App() {
   // Modals
   const [showHowToPlay, setShowHowToPlay] = useState<boolean>(false);
   const [showStats, setShowStats] = useState<boolean>(false);
+  const [showSettings, setShowSettings] = useState<boolean>(false);
 
   // Dragging state
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
@@ -182,6 +186,33 @@ export default function App() {
     const next = sounds.toggleHaptics();
     setHapticsEnabled(next);
   };
+
+  // Music & SFX independent volume handlers
+  const handleMusicVolumeChange = (vol: number) => {
+    sounds.setMusicVolume(vol);
+    setMusicVolume(vol);
+  };
+
+  const handleSfxVolumeChange = (vol: number) => {
+    sounds.setSfxVolume(vol);
+    setSfxVolume(vol);
+  };
+
+  // Ambient music lifecycle: starts looping in 'PLAYING', ducks in 'PAUSED', stops in menus
+  useEffect(() => {
+    if (gameState === 'PLAYING') {
+      sounds.startMusic();
+    } else if (gameState === 'PAUSED') {
+      sounds.pauseMusic();
+    } else if (gameState === 'TITLE_MENU' || gameState === 'GAME_OVER' || gameState === 'VICTORY') {
+      sounds.stopMusic();
+    }
+
+    return () => {
+      // Cleanup on unmount
+      sounds.stopMusic();
+    };
+  }, [gameState]);
 
   // Second Chance Blast
   const handleRevive = () => {
@@ -629,9 +660,23 @@ export default function App() {
           onSelectMode={setGameMode}
           onOpenHowToPlay={() => setShowHowToPlay(true)}
           onOpenStats={() => setShowStats(true)}
+          onOpenSettings={() => setShowSettings(true)}
         />
         {showHowToPlay && <HowToPlayModal onClose={() => setShowHowToPlay(false)} />}
         {showStats && <StatsModal onClose={() => setShowStats(false)} highScore={highScore} />}
+        {showSettings && (
+          <SettingsModal
+            onClose={() => setShowSettings(false)}
+            musicVolume={musicVolume}
+            onMusicVolumeChange={handleMusicVolumeChange}
+            sfxVolume={sfxVolume}
+            onSfxVolumeChange={handleSfxVolumeChange}
+            isMuted={isMuted}
+            onToggleMute={handleToggleMute}
+            hapticsEnabled={hapticsEnabled}
+            onToggleHaptics={handleToggleHaptics}
+          />
+        )}
       </>
     );
   }
@@ -679,6 +724,7 @@ export default function App() {
         onPause={() => setGameState('PAUSED')}
         onRestart={() => initGame(gameMode, adventureLevelIndex)}
         onHowToPlay={() => setShowHowToPlay(true)}
+        onOpenSettings={() => setShowSettings(true)}
       />
 
       {/* Center 8x8 Playfield */}
@@ -750,6 +796,10 @@ export default function App() {
           onToggleMute={handleToggleMute}
           hapticsEnabled={hapticsEnabled}
           onToggleHaptics={handleToggleHaptics}
+          musicVolume={musicVolume}
+          onMusicVolumeChange={handleMusicVolumeChange}
+          sfxVolume={sfxVolume}
+          onSfxVolumeChange={handleSfxVolumeChange}
         />
       )}
 
@@ -773,6 +823,21 @@ export default function App() {
 
       {/* Lifetime Stats Modal */}
       {showStats && <StatsModal onClose={() => setShowStats(false)} highScore={highScore} />}
+
+      {/* Audio & Settings Modal */}
+      {showSettings && (
+        <SettingsModal
+          onClose={() => setShowSettings(false)}
+          musicVolume={musicVolume}
+          onMusicVolumeChange={handleMusicVolumeChange}
+          sfxVolume={sfxVolume}
+          onSfxVolumeChange={handleSfxVolumeChange}
+          isMuted={isMuted}
+          onToggleMute={handleToggleMute}
+          hapticsEnabled={hapticsEnabled}
+          onToggleHaptics={handleToggleHaptics}
+        />
+      )}
     </div>
   );
 }
