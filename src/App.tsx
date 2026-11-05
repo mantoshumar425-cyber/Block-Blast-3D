@@ -710,11 +710,10 @@ export default function App() {
 
   return (
     <div
-      className="relative w-full h-screen overflow-hidden flex flex-col justify-between items-center p-2 sm:p-3 select-none touch-none"
+      className="relative w-full h-screen overflow-hidden flex flex-col justify-between items-center p-2 sm:p-3 select-none touch-none bg-[#021a28]"
       style={{
-        background: BLAST_BACKGROUNDS[blastBackgroundIndex],
-        backgroundColor: '#021a28',
-        transition: 'background 900ms ease-in-out',
+        backgroundImage: BLAST_BACKGROUNDS[blastBackgroundIndex],
+        transition: 'background-image 900ms ease-in-out',
       }}
     >
       <OfflineIndicator />

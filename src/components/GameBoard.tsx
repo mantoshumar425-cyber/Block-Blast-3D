@@ -62,7 +62,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       <div
         className="absolute inset-0 rounded-2xl pointer-events-none transition-all duration-500"
         style={{
-          background: themeConfig.ambientGrad,
+          backgroundImage: themeConfig.ambientGrad,
         }}
       />
 
