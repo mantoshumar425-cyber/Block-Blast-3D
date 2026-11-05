@@ -1,3 +1,4 @@
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -40,18 +41,16 @@ import { OfflineIndicator } from './components/OfflineIndicator';
 import { submitDailyScore } from './utils/dailyLeaderboard';
 
 const BLAST_BACKGROUNDS = [
-  'radial-gradient(circle at 18% 22%, rgba(255, 0, 128, 0.30), transparent 42%), radial-gradient(circle at 82% 28%, rgba(0, 210, 255, 0.28), transparent 44%), radial-gradient(circle at 50% 85%, rgba(255, 210, 0, 0.22), transparent 48%), linear-gradient(135deg, #090e1b, #17102b, #071a26)',
-  'radial-gradient(circle at 18% 22%, rgba(0, 255, 170, 0.30), transparent 42%), radial-gradient(circle at 82% 28%, rgba(150, 70, 255, 0.30), transparent 44%), radial-gradient(circle at 50% 85%, rgba(255, 90, 50, 0.24), transparent 48%), linear-gradient(135deg, #071820, #1a1030, #160b1b)',
-  'radial-gradient(circle at 18% 22%, rgba(255, 70, 70, 0.30), transparent 42%), radial-gradient(circle at 82% 28%, rgba(60, 120, 255, 0.30), transparent 44%), radial-gradient(circle at 50% 85%, rgba(255, 0, 190, 0.22), transparent 48%), linear-gradient(135deg, #160b1b, #10152b, #071522)',
-  'radial-gradient(circle at 18% 22%, rgba(255, 190, 0, 0.30), transparent 42%), radial-gradient(circle at 82% 28%, rgba(0, 230, 255, 0.28), transparent 44%), radial-gradient(circle at 50% 85%, rgba(120, 0, 255, 0.24), transparent 48%), linear-gradient(135deg, #111020, #071a2b, #1c1028)',
+  'radial-gradient(ellipse at 15% 20%, rgba(255, 0, 120, 0.72) 0%, transparent 48%), radial-gradient(ellipse at 85% 18%, rgba(0, 190, 255, 0.68) 0%, transparent 48%), radial-gradient(ellipse at 50% 90%, rgba(255, 210, 0, 0.58) 0%, transparent 52%), linear-gradient(135deg, #17102f 0%, #071b35 50%, #24102b 100%)',
+  'radial-gradient(ellipse at 15% 20%, rgba(0, 255, 160, 0.72) 0%, transparent 48%), radial-gradient(ellipse at 85% 18%, rgba(160, 40, 255, 0.70) 0%, transparent 48%), radial-gradient(ellipse at 50% 90%, rgba(255, 75, 35, 0.58) 0%, transparent 52%), linear-gradient(135deg, #062c2b 0%, #17103a 50%, #30101f 100%)',
+  'radial-gradient(ellipse at 15% 20%, rgba(255, 55, 55, 0.72) 0%, transparent 48%), radial-gradient(ellipse at 85% 18%, rgba(45, 115, 255, 0.72) 0%, transparent 48%), radial-gradient(ellipse at 50% 90%, rgba(255, 0, 200, 0.60) 0%, transparent 52%), linear-gradient(135deg, #351020 0%, #101b3b 50%, #260c35 100%)',
+  'radial-gradient(ellipse at 15% 20%, rgba(255, 195, 0, 0.72) 0%, transparent 48%), radial-gradient(ellipse at 85% 18%, rgba(0, 230, 255, 0.70) 0%, transparent 48%), radial-gradient(ellipse at 50% 90%, rgba(135, 30, 255, 0.62) 0%, transparent 52%), linear-gradient(135deg, #30210b 0%, #082a3b 50%, #241039 100%)',
 ];
 
 export default function App() {
-  // Game state machine
   const [gameState, setGameState] = useState<GameState>('TITLE_MENU');
   const [gameMode, setGameMode] = useState<GameMode>('classic');
 
-  // Scores
   const [score, setScore] = useState<number>(0);
   const [highScore, setHighScore] = useState<number>(() => {
     if (typeof window !== 'undefined') {
@@ -65,57 +64,47 @@ export default function App() {
   const [maxCombo, setMaxCombo] = useState<number>(0);
   const [linesClearedTotal, setLinesClearedTotal] = useState<number>(0);
 
-  // Second chance revive (1x per run)
   const [canRevive, setCanRevive] = useState<boolean>(true);
 
-  // Audio & Haptics settings
   const [isMuted, setIsMuted] = useState<boolean>(() => sounds.getIsMuted());
   const [hapticsEnabled, setHapticsEnabled] = useState<boolean>(() => sounds.getHapticsEnabled());
   const [musicVolume, setMusicVolume] = useState<number>(() => sounds.getMusicVolume());
   const [sfxVolume, setSfxVolume] = useState<number>(() => sounds.getSfxVolume());
 
-  // Board and piece slots
   const [grid, setGrid] = useState<(GridCell | null)[][]>(() => createEmptyGrid(8));
   const [pieces, setPieces] = useState<(Piece | null)[]>([null, null, null]);
 
-  // Adventure & Daily mode state
   const [adventureLevelIndex, setAdventureLevelIndex] = useState<number>(0);
   const [collectedGems, setCollectedGems] = useState<number>(0);
   const [dailyStreak, setDailyStreak] = useState<number>(0);
   const [dailyRank, setDailyRank] = useState<number | null>(null);
 
-  // Modals & Slidebar Drawer
   const [showHowToPlay, setShowHowToPlay] = useState<boolean>(false);
   const [showStats, setShowStats] = useState<boolean>(false);
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [isSlidebarOpen, setIsSlidebarOpen] = useState<boolean>(false);
   const [slidebarInitialTab, setSlidebarInitialTab] = useState<SlidebarTab>('menu');
 
-  // Dragging state
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const [dragPointerPos, setDragPointerPos] = useState<{ x: number; y: number } | null>(null);
   const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [selectedPieceIndex, setSelectedPieceIndex] = useState<number | null>(null);
 
-  // Hover & Line highlight preview
   const [hoverPos, setHoverPos] = useState<{ row: number; col: number } | null>(null);
   const [isValidHover, setIsValidHover] = useState<boolean>(false);
   const [highlightedRows, setHighlightedRows] = useState<number[]>([]);
   const [highlightedCols, setHighlightedCols] = useState<number[]>([]);
 
-  // Juice & FX
   const [shake, setShake] = useState<boolean>(false);
   const [particleTriggers, setParticleTriggers] = useState<ParticleTrigger[]>([]);
   const [scorePopups, setScorePopups] = useState<ScorePopup[]>([]);
   const [blastBackgroundIndex, setBlastBackgroundIndex] = useState<number>(0);
 
-  // References
   const boardRef = useRef<HTMLDivElement | null>(null);
   const isDraggingRef = useRef<boolean>(false);
   const activePieceRef = useRef<Piece | null>(null);
   const dragPointerPosRef = useRef<{ x: number; y: number } | null>(null);
 
-  // Sync high score to localStorage
   useEffect(() => {
     if (score > highScore) {
       setHighScore(score);
@@ -126,10 +115,8 @@ export default function App() {
     }
   }, [score, highScore]);
 
-  // Check which pieces can fit on the current board
   const validityMap = pieces.map((p) => (p ? canPlacePieceAnywhere(grid, p.shape) : false));
 
-  // Initialize a new game session
   const initGame = useCallback(
     (mode: GameMode, levelIdx: number = 0) => {
       setScore(0);
@@ -144,8 +131,8 @@ export default function App() {
       setHoverPos(null);
       setHighlightedRows([]);
       setHighlightedCols([]);
+      setBlastBackgroundIndex(0);
 
-      // Career stats: increment games played
       if (typeof window !== 'undefined') {
         const games = parseInt(localStorage.getItem('blockblast_games_played') || '0', 10);
         localStorage.setItem('blockblast_games_played', String(games + 1));
@@ -160,7 +147,6 @@ export default function App() {
         setGrid(challenge.initialBoard);
         setPieces(generatePieceBatch(challenge.initialBoard));
       } else {
-        // Adventure Level
         const level = ADVENTURE_LEVELS[levelIdx % ADVENTURE_LEVELS.length];
         const newGrid = createEmptyGrid(8);
         level.initialBoard.forEach((row, r) => {
@@ -190,19 +176,16 @@ export default function App() {
     []
   );
 
-  // Toggle audio
   const handleToggleMute = () => {
     const next = sounds.toggleMute();
     setIsMuted(next);
   };
 
-  // Toggle haptics
   const handleToggleHaptics = () => {
     const next = sounds.toggleHaptics();
     setHapticsEnabled(next);
   };
 
-  // Music & SFX independent volume handlers
   const handleMusicVolumeChange = (vol: number) => {
     sounds.setMusicVolume(vol);
     setMusicVolume(vol);
@@ -213,14 +196,12 @@ export default function App() {
     setSfxVolume(vol);
   };
 
-  // Open Slidebar Drawer
   const handleOpenSlidebar = (tab: SlidebarTab = 'menu') => {
     sounds.playClick();
     setSlidebarInitialTab(tab);
     setIsSlidebarOpen(true);
   };
 
-  // Clear all data callback
   const handleResetAllData = () => {
     setHighScore(0);
     setScore(0);
@@ -228,7 +209,6 @@ export default function App() {
     initGame('classic', 0);
   };
 
-  // Ambient music lifecycle: starts looping in 'PLAYING', ducks in 'PAUSED', stops in menus
   useEffect(() => {
     if (gameState === 'PLAYING') {
       sounds.startMusic();
@@ -237,30 +217,23 @@ export default function App() {
     } else if (gameState === 'TITLE_MENU' || gameState === 'GAME_OVER' || gameState === 'VICTORY') {
       sounds.stopMusic();
     }
-
     return () => {
-      // Cleanup on unmount
       sounds.stopMusic();
     };
   }, [gameState]);
 
-  // Second Chance Blast
   const handleRevive = () => {
     setCanRevive(false);
     sounds.playPlace();
     sounds.triggerHaptic('blast');
 
-    // Clear center 3x3: rows 2..4, cols 2..4
     const newGrid = grid.map((row, r) =>
       row.map((cell, c) => {
-        if (r >= 2 && r <= 5 && c >= 2 && c <= 5) {
-          return null;
-        }
+        if (r >= 2 && r <= 5 && c >= 2 && c <= 5) return null;
         return cell;
       })
     );
 
-    // Particle explosion at center
     if (boardRef.current) {
       const boardRect = boardRef.current.getBoundingClientRect();
       const centerX = boardRect.left + boardRect.width / 2;
@@ -273,8 +246,8 @@ export default function App() {
 
     setShake(true);
     setTimeout(() => setShake(false), 300);
+    setBlastBackgroundIndex((prev) => (prev + 1) % BLAST_BACKGROUNDS.length);
 
-    // Ensure remaining pieces can fit, or refresh tray
     let activePieces = pieces;
     if (!hasAnyValidMove(newGrid, activePieces)) {
       activePieces = generatePieceBatch(newGrid);
@@ -285,20 +258,16 @@ export default function App() {
     setGameState('PLAYING');
   };
 
-  // Place piece logic
   const handlePlacePiece = useCallback(
     (pieceIndex: number, targetRow: number, targetCol: number) => {
       const piece = pieces[pieceIndex];
       if (!piece) return;
 
-      if (!canPlacePiece(grid, piece.shape, targetRow, targetCol)) {
-        return;
-      }
+      if (!canPlacePiece(grid, piece.shape, targetRow, targetCol)) return;
 
       sounds.playPlace();
       sounds.triggerHaptic('place');
 
-      // Place blocks on grid
       const newGrid = grid.map((row) => [...row]);
       for (let r = 0; r < piece.shape.length; r++) {
         for (let c = 0; c < piece.shape[r].length; c++) {
@@ -311,7 +280,6 @@ export default function App() {
         }
       }
 
-      // Check lines completed
       const clears = getPotentialClears(grid, piece.shape, targetRow, targetCol);
       const totalClears = clears.rows.length + clears.cols.length;
 
@@ -321,15 +289,14 @@ export default function App() {
 
       if (totalClears > 0) {
         setBlastBackgroundIndex((prev) => (prev + 1) % BLAST_BACKGROUNDS.length);
+
         nextCombo = combo + 1;
         setCombo(nextCombo);
         setMaxCombo((prev) => {
           const updated = Math.max(prev, nextCombo);
           if (typeof window !== 'undefined') {
             const stored = parseInt(localStorage.getItem('blockblast_best_combo') || '0', 10);
-            if (updated > stored) {
-              localStorage.setItem('blockblast_best_combo', String(updated));
-            }
+            if (updated > stored) localStorage.setItem('blockblast_best_combo', String(updated));
           }
           return updated;
         });
@@ -346,27 +313,21 @@ export default function App() {
         sounds.playLineClear(totalClears, nextCombo);
         sounds.triggerHaptic('blast');
 
-        if (nextCombo > 1) {
-          sounds.playComboStreak(nextCombo);
-        }
+        if (nextCombo > 1) sounds.playComboStreak(nextCombo);
 
-        // Screen shake
         setShake(true);
         setTimeout(() => setShake(false), 240);
 
-        // Score calculation
         const scoreCalc = calculatePlacementScore(piece.blockCount, totalClears, nextCombo);
         scoreGained = scoreCalc.score;
         multiplierLabel = scoreCalc.multiplierText;
 
-        // Visual particles along cleared rows and cols
         if (boardRef.current) {
           const boardRect = boardRef.current.getBoundingClientRect();
           const cellSize = boardRect.width / 8;
           const newTriggers: ParticleTrigger[] = [];
           let gemsBlasted = 0;
 
-          // Rows
           clears.rows.forEach((r) => {
             const centerY = boardRect.top + (r + 0.5) * cellSize;
             for (let c = 0; c < 8; c++) {
@@ -389,7 +350,6 @@ export default function App() {
             });
           });
 
-          // Columns
           clears.cols.forEach((c) => {
             const centerX = boardRect.left + (c + 0.5) * cellSize;
             for (let r = 0; r < 8; r++) {
@@ -414,7 +374,6 @@ export default function App() {
 
           setParticleTriggers(newTriggers);
 
-          // Adventure mode check
           if (gemsBlasted > 0 && gameMode === 'adventure') {
             setCollectedGems((prev) => {
               const updated = prev + gemsBlasted;
@@ -429,24 +388,18 @@ export default function App() {
             });
           }
 
-          // Mark cells as clearing
           clears.rows.forEach((r) => {
             for (let c = 0; c < 8; c++) {
-              if (newGrid[r][c]) {
-                newGrid[r][c] = { ...newGrid[r][c]!, clearing: true };
-              }
+              if (newGrid[r][c]) newGrid[r][c] = { ...newGrid[r][c]!, clearing: true };
             }
           });
           clears.cols.forEach((c) => {
             for (let r = 0; r < 8; r++) {
-              if (newGrid[r][c]) {
-                newGrid[r][c] = { ...newGrid[r][c]!, clearing: true };
-              }
+              if (newGrid[r][c]) newGrid[r][c] = { ...newGrid[r][c]!, clearing: true };
             }
           });
         }
 
-        // Floating score popup centered over board
         if (boardRef.current) {
           const boardRect = boardRef.current.getBoundingClientRect();
           const popup: ScorePopup = {
@@ -458,12 +411,9 @@ export default function App() {
             isCombo: nextCombo > 1,
           };
           setScorePopups((prev) => [...prev, popup]);
-          setTimeout(() => {
-            setScorePopups((prev) => prev.filter((p) => p.id !== popup.id));
-          }, 1100);
+          setTimeout(() => setScorePopups((prev) => prev.filter((p) => p.id !== popup.id)), 1100);
         }
       } else {
-        // No lines cleared: combo drops
         setCombo(0);
         scoreGained = piece.blockCount;
       }
@@ -471,16 +421,13 @@ export default function App() {
       const newTotalScore = score + scoreGained;
       setScore(newTotalScore);
 
-      // Daily mode victory check
       if (gameMode === 'daily') {
         const challenge = getTodayChallenge();
         if (newTotalScore >= challenge.targetScore && !challenge.isCompleted) {
           const updatedStreak = markTodayChallengeComplete();
           setDailyStreak(updatedStreak);
           const lbResult = submitDailyScore(newTotalScore);
-          if (lbResult.isTop5) {
-            setDailyRank(lbResult.rank);
-          }
+          if (lbResult.isTop5) setDailyRank(lbResult.rank);
           setTimeout(() => {
             sounds.playLevelVictory();
             setGameState('VICTORY');
@@ -488,25 +435,20 @@ export default function App() {
         }
       }
 
-      // Consume piece from tray
       const nextPieces = [...pieces];
       nextPieces[pieceIndex] = null;
 
-      // Update grid with temporary clearing animations, then actually clear
       setGrid(newGrid);
 
       setTimeout(() => {
         const finalizedGrid = newGrid.map((row, r) =>
           row.map((cell, c) => {
-            if (clears.rows.includes(r) || clears.cols.includes(c)) {
-              return null;
-            }
+            if (clears.rows.includes(r) || clears.cols.includes(c)) return null;
             return cell ? { ...cell, clearing: false } : null;
           })
         );
         setGrid(finalizedGrid);
 
-        // Check if all 3 pieces are consumed
         let activePieces = nextPieces;
         if (nextPieces.every((p) => p === null)) {
           activePieces = generatePieceBatch(finalizedGrid);
@@ -515,21 +457,17 @@ export default function App() {
           setPieces(nextPieces);
         }
 
-        // Check Game Over: can ANY remaining piece be placed anywhere?
         const canContinue = hasAnyValidMove(finalizedGrid, activePieces);
         if (!canContinue) {
           if (gameMode === 'daily') {
             const lbResult = submitDailyScore(newTotalScore);
-            if (lbResult.isTop5) {
-              setDailyRank(lbResult.rank);
-            }
+            if (lbResult.isTop5) setDailyRank(lbResult.rank);
           }
           sounds.playGameOver();
           setGameState('GAME_OVER');
         }
       }, totalClears > 0 ? 180 : 0);
 
-      // Reset selection and previews
       setSelectedPieceIndex(null);
       setDraggingIndex(null);
       setHoverPos(null);
@@ -539,14 +477,12 @@ export default function App() {
     [grid, pieces, combo, score, gameMode, adventureLevelIndex]
   );
 
-  // Click on cell when a piece is selected
   const handleCellClick = (row: number, col: number) => {
     if (selectedPieceIndex !== null && pieces[selectedPieceIndex]) {
       handlePlacePiece(selectedPieceIndex, row, col);
     }
   };
 
-  // Select piece from tray for click-to-place
   const handleSelectPiece = (index: number) => {
     if (draggingIndex !== null) return;
     if (selectedPieceIndex === index) {
@@ -560,4 +496,326 @@ export default function App() {
     }
   };
 
-  // P
+  const handlePointerDownPiece = (index: number, e: React.PointerEvent) => {
+    const piece = pieces[index];
+    if (!piece) return;
+    if (!canPlacePieceAnywhere(grid, piece.shape)) return;
+
+    sounds.playPickup();
+    sounds.triggerHaptic('pickup');
+
+    const isTouch = e.pointerType === 'touch';
+    const offsetY = isTouch ? -80 : -20;
+    const offsetX = 0;
+
+    isDraggingRef.current = true;
+    activePieceRef.current = piece;
+    setDraggingIndex(index);
+    setSelectedPieceIndex(index);
+    setDragOffset({ x: offsetX, y: offsetY });
+    setDragPointerPos({ x: e.clientX, y: e.clientY });
+    dragPointerPosRef.current = { x: e.clientX, y: e.clientY };
+
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  useEffect(() => {
+    if (draggingIndex === null) return;
+
+    const handlePointerMove = (e: PointerEvent) => {
+      const piece = pieces[draggingIndex];
+      if (!piece) return;
+
+      const px = e.clientX;
+      const py = e.clientY;
+      setDragPointerPos({ x: px, y: py });
+      dragPointerPosRef.current = { x: px, y: py };
+
+      if (!boardRef.current) return;
+      const boardRect = boardRef.current.getBoundingClientRect();
+      const cellSize = boardRect.width / 8;
+
+      const effectiveX = px + dragOffset.x;
+      const effectiveY = py + dragOffset.y;
+
+      const piecePixelWidth = piece.width * cellSize;
+      const piecePixelHeight = piece.height * cellSize;
+
+      const col = Math.round((effectiveX - boardRect.left - piecePixelWidth / 2) / cellSize);
+      const row = Math.round((effectiveY - boardRect.top - piecePixelHeight / 2) / cellSize);
+
+      if (row >= 0 && row + piece.height <= 8 && col >= 0 && col + piece.width <= 8) {
+        const valid = canPlacePiece(grid, piece.shape, row, col);
+        setHoverPos({ row, col });
+        setIsValidHover(valid);
+
+        if (valid) {
+          const clears = getPotentialClears(grid, piece.shape, row, col);
+          setHighlightedRows(clears.rows);
+          setHighlightedCols(clears.cols);
+        } else {
+          setHighlightedRows([]);
+          setHighlightedCols([]);
+        }
+      } else {
+        setHoverPos(null);
+        setIsValidHover(false);
+        setHighlightedRows([]);
+        setHighlightedCols([]);
+      }
+    };
+
+    const handlePointerUp = () => {
+      if (draggingIndex !== null && hoverPos && isValidHover) {
+        handlePlacePiece(draggingIndex, hoverPos.row, hoverPos.col);
+      } else {
+        setDraggingIndex(null);
+        setDragPointerPos(null);
+        setHoverPos(null);
+        setHighlightedRows([]);
+        setHighlightedCols([]);
+      }
+      isDraggingRef.current = false;
+      activePieceRef.current = null;
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+    window.addEventListener('pointercancel', handlePointerUp);
+
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+      window.removeEventListener('pointercancel', handlePointerUp);
+    };
+  }, [draggingIndex, pieces, grid, dragOffset, hoverPos, isValidHover, handlePlacePiece]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Escape') {
+        if (gameState === 'PLAYING') {
+          sounds.playClick();
+          setGameState('PAUSED');
+        } else if (gameState === 'PAUSED') {
+          sounds.playClick();
+          setGameState('PLAYING');
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [gameState]);
+
+  if (gameState === 'TITLE_MENU') {
+    return (
+      <>
+        <OfflineIndicator />
+        <TitleScreen
+          onStart={(mode) => {
+            setGameMode(mode);
+            initGame(mode, 0);
+          }}
+          highScore={highScore}
+          isMuted={isMuted}
+          onToggleMute={handleToggleMute}
+          hapticsEnabled={hapticsEnabled}
+          onToggleHaptics={handleToggleHaptics}
+          selectedMode={gameMode}
+          onSelectMode={setGameMode}
+          onOpenHowToPlay={() => setShowHowToPlay(true)}
+          onOpenStats={() => setShowStats(true)}
+          onOpenSettings={() => setShowSettings(true)}
+          onOpenSlidebar={handleOpenSlidebar}
+          dailyStreak={dailyStreak}
+        />
+        {showHowToPlay && <HowToPlayModal onClose={() => setShowHowToPlay(false)} />}
+        {showStats && <StatsModal onClose={() => setShowStats(false)} highScore={highScore} />}
+        {showSettings && (
+          <SettingsModal
+            onClose={() => setShowSettings(false)}
+            musicVolume={musicVolume}
+            onMusicVolumeChange={handleMusicVolumeChange}
+            sfxVolume={sfxVolume}
+            onSfxVolumeChange={handleSfxVolumeChange}
+            isMuted={isMuted}
+            onToggleMute={handleToggleMute}
+            hapticsEnabled={hapticsEnabled}
+            onToggleHaptics={handleToggleHaptics}
+          />
+        )}
+        <SlidebarDrawer
+          isOpen={isSlidebarOpen}
+          onClose={() => setIsSlidebarOpen(false)}
+          initialTab={slidebarInitialTab}
+          onResetAllData={handleResetAllData}
+        />
+      </>
+    );
+  }
+
+  const currentLevel =
+    gameMode === 'adventure'
+      ? ADVENTURE_LEVELS[adventureLevelIndex % ADVENTURE_LEVELS.length]
+      : undefined;
+
+  const draggedPiece = draggingIndex !== null ? pieces[draggingIndex] : null;
+
+  return (
+    <div
+      className="relative w-full h-screen overflow-hidden flex flex-col justify-between items-center p-2 sm:p-3 select-none touch-none"
+      style={{
+        background: BLAST_BACKGROUNDS[blastBackgroundIndex],
+        backgroundColor: '#101329',
+        transition: 'background 900ms ease-in-out',
+      }}
+    >
+      <OfflineIndicator />
+
+      <div
+        className="absolute inset-0 opacity-[0.06] pointer-events-none"
+        style={{
+          backgroundImage:
+            'radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.2) 0%, transparent 60%), linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px)',
+          backgroundSize: '100% 100%, 40px 40px, 40px 40px',
+        }}
+      />
+
+      <ParticleCanvas triggers={particleTriggers} />
+      <ScorePopups popups={scorePopups} />
+
+      <HUD
+        score={score}
+        highScore={highScore}
+        combo={combo}
+        gameMode={gameMode}
+        levelNumber={adventureLevelIndex + 1}
+        collectedGems={collectedGems}
+        targetGems={currentLevel?.targetGems}
+        dailyTargetScore={1200}
+        isMuted={isMuted}
+        onToggleMute={handleToggleMute}
+        onPause={() => setGameState('PAUSED')}
+        onRestart={() => initGame(gameMode, adventureLevelIndex)}
+        onHowToPlay={() => setShowHowToPlay(true)}
+        onOpenSettings={() => setShowSettings(true)}
+        onOpenSlidebar={handleOpenSlidebar}
+      />
+
+      <main className="flex-1 flex items-center justify-center w-full z-10 py-1">
+        <GameBoard
+          grid={grid}
+          activePiece={draggedPiece || (selectedPieceIndex !== null ? pieces[selectedPieceIndex] : null)}
+          hoverPos={hoverPos}
+          isValidHover={isValidHover}
+          highlightedRows={highlightedRows}
+          highlightedCols={highlightedCols}
+          onCellClick={handleCellClick}
+          boardRef={boardRef}
+          shake={shake}
+        />
+      </main>
+
+      <footer className="w-full flex justify-center z-10 pb-2">
+        <PieceTray
+          pieces={pieces}
+          selectedPieceIndex={selectedPieceIndex}
+          draggingIndex={draggingIndex}
+          validityMap={validityMap}
+          onSelectPiece={handleSelectPiece}
+          onPointerDownPiece={handlePointerDownPiece}
+        />
+      </footer>
+
+      {draggedPiece && dragPointerPos && (
+        <div
+          className="fixed pointer-events-none z-50 transform -translate-x-1/2 -translate-y-1/2 transition-transform duration-75"
+          style={{
+            left: `${dragPointerPos.x + dragOffset.x}px`,
+            top: `${dragPointerPos.y + dragOffset.y}px`,
+          }}
+        >
+          <BlockPiece
+            piece={draggedPiece}
+            cellSize={boardRef.current ? boardRef.current.clientWidth / 8.6 : 38}
+            isDragging={true}
+          />
+        </div>
+      )}
+
+      {gameState === 'GAME_OVER' && (
+        <GameOverModal
+          score={score}
+          highScore={highScore}
+          isNewHigh={isNewHigh}
+          linesCleared={linesClearedTotal}
+          maxCombo={maxCombo}
+          canRevive={canRevive}
+          onRevive={handleRevive}
+          onRestart={() => initGame(gameMode, adventureLevelIndex)}
+          onHome={() => setGameState('TITLE_MENU')}
+          dailyRank={dailyRank}
+          onOpenLeaderboard={() => handleOpenSlidebar('leaderboard')}
+        />
+      )}
+
+      {gameState === 'PAUSED' && (
+        <PauseModal
+          onResume={() => setGameState('PLAYING')}
+          onRestart={() => initGame(gameMode, adventureLevelIndex)}
+          onHome={() => setGameState('TITLE_MENU')}
+          onHowToPlay={() => setShowHowToPlay(true)}
+          isMuted={isMuted}
+          onToggleMute={handleToggleMute}
+          hapticsEnabled={hapticsEnabled}
+          onToggleHaptics={handleToggleHaptics}
+          musicVolume={musicVolume}
+          onMusicVolumeChange={handleMusicVolumeChange}
+          sfxVolume={sfxVolume}
+          onSfxVolumeChange={handleSfxVolumeChange}
+          onOpenSlidebar={handleOpenSlidebar}
+        />
+      )}
+
+      {gameState === 'VICTORY' && (
+        <VictoryModal
+          score={score}
+          levelNumber={adventureLevelIndex + 1}
+          mode={gameMode === 'daily' ? 'daily' : 'adventure'}
+          streakCount={dailyStreak}
+          onNextLevel={() => {
+            const nextIdx = adventureLevelIndex + 1;
+            setAdventureLevelIndex(nextIdx);
+            initGame('adventure', nextIdx);
+          }}
+          onHome={() => setGameState('TITLE_MENU')}
+          dailyRank={dailyRank}
+          onOpenLeaderboard={() => handleOpenSlidebar('leaderboard')}
+        />
+      )}
+
+      {showHowToPlay && <HowToPlayModal onClose={() => setShowHowToPlay(false)} />}
+      {showStats && <StatsModal onClose={() => setShowStats(false)} />}
+
+      {showSettings && (
+        <SettingsModal
+          onClose={() => setShowSettings(false)}
+          musicVolume={musicVolume}
+          onMusicVolumeChange={handleMusicVolumeChange}
+          sfxVolume={sfxVolume}
+          onSfxVolumeChange={handleSfxVolumeChange}
+          isMuted={isMuted}
+          onToggleMute={handleToggleMute}
+          hapticsEnabled={hapticsEnabled}
+          onToggleHaptics={handleToggleHaptics}
+        />
+      )}
+
+      <SlidebarDrawer
+        isOpen={isSlidebarOpen}
+        onClose={() => setIsSlidebarOpen(false)}
+        initialTab={slidebarInitialTab}
+        onResetAllData={handleResetAllData}
+      />
+    </div>
+  );
+}
