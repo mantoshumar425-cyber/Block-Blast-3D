@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { BlockColorKey, GridCell, Piece } from '../types/game';
+import { BlockColorKey, GridCell, Piece, BlockType } from '../types/game';
 
 export interface ColorTheme {
   primary: string;
@@ -353,6 +353,44 @@ export function countBlocks(shape: boolean[][]): number {
 export function createPieceFromShape(def: ShapeDef): Piece {
   const height = def.shape.length;
   const width = def.shape[0].length;
+
+  // Multiple block types: 30% chance for a piece to contain a special block (💎 diamond, ⭐ star, or ⚡ neon)
+  const blockTypes: BlockType[][] = [];
+  const hasSpecial = Math.random() < 0.32;
+  const specialType: BlockType = Math.random() < 0.65 ? 'diamond' : Math.random() < 0.85 ? 'star' : 'neon';
+  let assignedSpecial = false;
+
+  for (let r = 0; r < height; r++) {
+    const rowTypes: BlockType[] = [];
+    for (let c = 0; c < width; c++) {
+      if (def.shape[r][c]) {
+        if (hasSpecial && !assignedSpecial && Math.random() < 0.5) {
+          rowTypes.push(specialType);
+          assignedSpecial = true;
+        } else {
+          rowTypes.push('standard');
+        }
+      } else {
+        rowTypes.push('standard');
+      }
+    }
+    blockTypes.push(rowTypes);
+  }
+
+  // Ensure special was assigned if hasSpecial was true
+  if (hasSpecial && !assignedSpecial) {
+    for (let r = 0; r < height; r++) {
+      for (let c = 0; c < width; c++) {
+        if (def.shape[r][c] && !assignedSpecial) {
+          blockTypes[r][c] = specialType;
+          assignedSpecial = true;
+          break;
+        }
+      }
+      if (assignedSpecial) break;
+    }
+  }
+
   return {
     id: `piece-${Math.random().toString(36).substring(2, 9)}`,
     shape: def.shape,
@@ -360,6 +398,7 @@ export function createPieceFromShape(def: ShapeDef): Piece {
     width,
     height,
     blockCount: countBlocks(def.shape),
+    blockTypes,
   };
 }
 

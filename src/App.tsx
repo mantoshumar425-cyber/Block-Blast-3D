@@ -11,8 +11,10 @@ import {
   GridCell,
   Piece,
   ScorePopup,
+  BoardTheme,
 } from './types/game';
 import { sounds } from './utils/audio';
+import { getSavedTheme, saveTheme } from './utils/themes';
 import {
   generatePieceBatch,
   createEmptyGrid,
@@ -41,10 +43,10 @@ import { OfflineIndicator } from './components/OfflineIndicator';
 import { submitDailyScore } from './utils/dailyLeaderboard';
 
 const BLAST_BACKGROUNDS = [
-  'radial-gradient(ellipse at 15% 20%, rgba(255, 0, 120, 0.72) 0%, transparent 48%), radial-gradient(ellipse at 85% 18%, rgba(0, 190, 255, 0.68) 0%, transparent 48%), radial-gradient(ellipse at 50% 90%, rgba(255, 210, 0, 0.58) 0%, transparent 52%), linear-gradient(135deg, #17102f 0%, #071b35 50%, #24102b 100%)',
-  'radial-gradient(ellipse at 15% 20%, rgba(0, 255, 160, 0.72) 0%, transparent 48%), radial-gradient(ellipse at 85% 18%, rgba(160, 40, 255, 0.70) 0%, transparent 48%), radial-gradient(ellipse at 50% 90%, rgba(255, 75, 35, 0.58) 0%, transparent 52%), linear-gradient(135deg, #062c2b 0%, #17103a 50%, #30101f 100%)',
-  'radial-gradient(ellipse at 15% 20%, rgba(255, 55, 55, 0.72) 0%, transparent 48%), radial-gradient(ellipse at 85% 18%, rgba(45, 115, 255, 0.72) 0%, transparent 48%), radial-gradient(ellipse at 50% 90%, rgba(255, 0, 200, 0.60) 0%, transparent 52%), linear-gradient(135deg, #351020 0%, #101b3b 50%, #260c35 100%)',
-  'radial-gradient(ellipse at 15% 20%, rgba(255, 195, 0, 0.72) 0%, transparent 48%), radial-gradient(ellipse at 85% 18%, rgba(0, 230, 255, 0.70) 0%, transparent 48%), radial-gradient(ellipse at 50% 90%, rgba(135, 30, 255, 0.62) 0%, transparent 52%), linear-gradient(135deg, #30210b 0%, #082a3b 50%, #241039 100%)',
+  'radial-gradient(ellipse at 15% 20%, rgba(14, 165, 233, 0.75) 0%, transparent 50%), radial-gradient(ellipse at 85% 18%, rgba(20, 184, 166, 0.70) 0%, transparent 50%), radial-gradient(ellipse at 50% 90%, rgba(6, 182, 212, 0.60) 0%, transparent 55%), linear-gradient(135deg, #021f2d 0%, #053b4f 50%, #011520 100%)',
+  'radial-gradient(ellipse at 20% 25%, rgba(2, 132, 199, 0.80) 0%, transparent 50%), radial-gradient(ellipse at 80% 20%, rgba(45, 212, 191, 0.70) 0%, transparent 50%), radial-gradient(ellipse at 50% 85%, rgba(56, 189, 248, 0.65) 0%, transparent 55%), linear-gradient(135deg, #011d2b 0%, #033647 50%, #01111a 100%)',
+  'radial-gradient(ellipse at 15% 25%, rgba(13, 148, 136, 0.75) 0%, transparent 52%), radial-gradient(ellipse at 85% 20%, rgba(14, 165, 233, 0.70) 0%, transparent 50%), radial-gradient(ellipse at 50% 90%, rgba(16, 185, 129, 0.55) 0%, transparent 55%), linear-gradient(135deg, #02232b 0%, #064047 50%, #01171d 100%)',
+  'radial-gradient(ellipse at 25% 15%, rgba(6, 182, 212, 0.80) 0%, transparent 50%), radial-gradient(ellipse at 75% 25%, rgba(56, 189, 248, 0.75) 0%, transparent 50%), radial-gradient(ellipse at 50% 85%, rgba(20, 184, 166, 0.60) 0%, transparent 55%), linear-gradient(135deg, #021b28 0%, #04384d 50%, #01121d 100%)',
 ];
 
 export default function App() {
@@ -82,8 +84,14 @@ export default function App() {
   const [showHowToPlay, setShowHowToPlay] = useState<boolean>(false);
   const [showStats, setShowStats] = useState<boolean>(false);
   const [showSettings, setShowSettings] = useState<boolean>(false);
+  const [currentTheme, setCurrentTheme] = useState<BoardTheme>(() => getSavedTheme());
   const [isSlidebarOpen, setIsSlidebarOpen] = useState<boolean>(false);
   const [slidebarInitialTab, setSlidebarInitialTab] = useState<SlidebarTab>('menu');
+
+  const handleThemeChange = (newTheme: BoardTheme) => {
+    setCurrentTheme(newTheme);
+    saveTheme(newTheme);
+  };
 
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const [dragPointerPos, setDragPointerPos] = useState<{ x: number; y: number } | null>(null);
@@ -275,6 +283,7 @@ export default function App() {
             newGrid[targetRow + r][targetCol + c] = {
               id: `block-${Date.now()}-${r}-${c}`,
               colorKey: piece.colorKey,
+              blockType: piece.blockTypes?.[r]?.[c] || 'standard',
             };
           }
         }
@@ -327,19 +336,26 @@ export default function App() {
           const cellSize = boardRect.width / 8;
           const newTriggers: ParticleTrigger[] = [];
           let gemsBlasted = 0;
+          let diamondsBlasted = 0;
 
           clears.rows.forEach((r) => {
             const centerY = boardRect.top + (r + 0.5) * cellSize;
             for (let c = 0; c < 8; c++) {
               const cell = newGrid[r][c];
               if (cell?.hasGem) gemsBlasted++;
+              if (cell?.blockType === 'diamond' || cell?.hasGem) diamondsBlasted++;
+
               const centerX = boardRect.left + (c + 0.5) * cellSize;
               newTriggers.push({
                 x: centerX,
                 y: centerY,
-                color: cell ? (cell.colorKey === 'yellow' ? '#fde047' : '#38bdf8') : '#38bdf8',
-                count: 12,
-                type: cell?.hasGem ? 'gem' : 'burst',
+                color: (cell?.blockType === 'diamond' || cell?.hasGem)
+                  ? '#38bdf8'
+                  : cell?.blockType === 'star'
+                  ? '#facc15'
+                  : cell ? (cell.colorKey === 'yellow' ? '#fde047' : '#0ea5e9') : '#0ea5e9',
+                count: (cell?.blockType === 'diamond' || cell?.hasGem) ? 16 : 12,
+                type: (cell?.hasGem || cell?.blockType === 'diamond') ? 'gem' : 'burst',
               });
             }
             newTriggers.push({
@@ -354,25 +370,42 @@ export default function App() {
             const centerX = boardRect.left + (c + 0.5) * cellSize;
             for (let r = 0; r < 8; r++) {
               const cell = newGrid[r][c];
-              if (cell?.hasGem) gemsBlasted++;
+              if (!clears.rows.includes(r)) {
+                if (cell?.hasGem) gemsBlasted++;
+                if (cell?.blockType === 'diamond' || cell?.hasGem) diamondsBlasted++;
+              }
+
               const centerY = boardRect.top + (r + 0.5) * cellSize;
               newTriggers.push({
                 x: centerX,
                 y: centerY,
-                color: '#fbbf24',
-                count: 12,
-                type: cell?.hasGem ? 'gem' : 'burst',
+                color: (cell?.blockType === 'diamond' || cell?.hasGem)
+                  ? '#38bdf8'
+                  : cell?.blockType === 'star'
+                  ? '#facc15'
+                  : '#14b8a6',
+                count: (cell?.blockType === 'diamond' || cell?.hasGem) ? 16 : 12,
+                type: (cell?.hasGem || cell?.blockType === 'diamond') ? 'gem' : 'burst',
               });
             }
             newTriggers.push({
               x: centerX,
               y: boardRect.top + boardRect.height / 2,
-              color: '#fbbf24',
+              color: '#14b8a6',
               type: 'ring',
             });
           });
 
           setParticleTriggers(newTriggers);
+
+          // Diamond blast bonus points!
+          if (diamondsBlasted > 0) {
+            const diamondBonus = diamondsBlasted * 150;
+            scoreGained += diamondBonus;
+            multiplierLabel = multiplierLabel
+              ? `${multiplierLabel} • 💎 +${diamondBonus}`
+              : `💎 +${diamondBonus}`;
+          }
 
           if (gemsBlasted > 0 && gameMode === 'adventure') {
             setCollectedGems((prev) => {
@@ -388,14 +421,27 @@ export default function App() {
             });
           }
 
+          // Dynamic clearing transformation on the blasted blocks
           clears.rows.forEach((r) => {
             for (let c = 0; c < 8; c++) {
-              if (newGrid[r][c]) newGrid[r][c] = { ...newGrid[r][c]!, clearing: true };
+              if (newGrid[r][c]) {
+                newGrid[r][c] = {
+                  ...newGrid[r][c]!,
+                  clearing: true,
+                  clearingColor: (r + c) % 2 === 0 ? '#38bdf8' : '#2dd4bf',
+                };
+              }
             }
           });
           clears.cols.forEach((c) => {
             for (let r = 0; r < 8; r++) {
-              if (newGrid[r][c]) newGrid[r][c] = { ...newGrid[r][c]!, clearing: true };
+              if (newGrid[r][c]) {
+                newGrid[r][c] = {
+                  ...newGrid[r][c]!,
+                  clearing: true,
+                  clearingColor: (r + c) % 2 === 0 ? '#0ea5e9' : '#14b8a6',
+                };
+              }
             }
           });
         }
@@ -641,6 +687,8 @@ export default function App() {
             onToggleMute={handleToggleMute}
             hapticsEnabled={hapticsEnabled}
             onToggleHaptics={handleToggleHaptics}
+            currentTheme={currentTheme}
+            onThemeChange={handleThemeChange}
           />
         )}
         <SlidebarDrawer
@@ -665,17 +713,17 @@ export default function App() {
       className="relative w-full h-screen overflow-hidden flex flex-col justify-between items-center p-2 sm:p-3 select-none touch-none"
       style={{
         background: BLAST_BACKGROUNDS[blastBackgroundIndex],
-        backgroundColor: '#101329',
+        backgroundColor: '#021a28',
         transition: 'background 900ms ease-in-out',
       }}
     >
       <OfflineIndicator />
 
       <div
-        className="absolute inset-0 opacity-[0.06] pointer-events-none"
+        className="absolute inset-0 opacity-[0.08] pointer-events-none"
         style={{
           backgroundImage:
-            'radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.2) 0%, transparent 60%), linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px)',
+            'radial-gradient(circle at 50% 50%, rgba(14, 165, 233, 0.25) 0%, transparent 60%), linear-gradient(rgba(56, 189, 248, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(20, 184, 166, 0.05) 1px, transparent 1px)',
           backgroundSize: '100% 100%, 40px 40px, 40px 40px',
         }}
       />
@@ -712,6 +760,7 @@ export default function App() {
           onCellClick={handleCellClick}
           boardRef={boardRef}
           shake={shake}
+          theme={currentTheme}
         />
       </main>
 
@@ -794,7 +843,7 @@ export default function App() {
       )}
 
       {showHowToPlay && <HowToPlayModal onClose={() => setShowHowToPlay(false)} />}
-      {showStats && <StatsModal onClose={() => setShowStats(false)} />}
+      {showStats && <StatsModal onClose={() => setShowStats(false)} highScore={highScore} />}
 
       {showSettings && (
         <SettingsModal
@@ -807,6 +856,8 @@ export default function App() {
           onToggleMute={handleToggleMute}
           hapticsEnabled={hapticsEnabled}
           onToggleHaptics={handleToggleHaptics}
+          currentTheme={currentTheme}
+          onThemeChange={handleThemeChange}
         />
       )}
 

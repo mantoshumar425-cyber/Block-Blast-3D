@@ -61,6 +61,8 @@ export const BlockPiece: React.FC<BlockPieceProps> = ({
               );
             }
 
+            const blockType = piece.blockTypes?.[r]?.[c] || 'standard';
+
             return (
               <div
                 key={c}
@@ -72,10 +74,26 @@ export const BlockPiece: React.FC<BlockPieceProps> = ({
               >
                 {/* 3D Top-left gloss sheen */}
                 <div className="absolute top-0.5 left-0.5 right-0.5 h-1/3 bg-white/30 rounded-t-md pointer-events-none" />
-                {/* Subtle core jewel dot */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="w-1.5 h-1.5 rounded-full bg-white/60 blur-[0.5px]" />
-                </div>
+
+                {/* Multiple block types preview in tray */}
+                {blockType === 'diamond' ? (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <span className="text-[12px] sm:text-sm select-none drop-shadow-[0_0_6px_rgba(56,189,248,0.9)] animate-pulse">
+                      💎
+                    </span>
+                  </div>
+                ) : blockType === 'star' ? (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <span className="text-[11px] sm:text-xs select-none drop-shadow-[0_0_6px_rgba(251,191,36,0.9)]">
+                      ⭐
+                    </span>
+                  </div>
+                ) : (
+                  /* Subtle core jewel dot */
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="w-1.5 h-1.5 rounded-full bg-white/60 blur-[0.5px]" />
+                  </div>
+                )}
               </div>
             );
           })}
@@ -89,6 +107,7 @@ export const BlockPiece: React.FC<BlockPieceProps> = ({
 interface CellProps {
   colorKey?: BlockColorKey;
   hasGem?: boolean;
+  blockType?: 'standard' | 'diamond' | 'neon' | 'star';
   clearing?: boolean;
   isGhost?: boolean;
   isHighlighted?: boolean;
@@ -99,13 +118,14 @@ interface CellProps {
 export const GridBlockCell: React.FC<CellProps> = ({
   colorKey,
   hasGem = false,
+  blockType = 'standard',
   clearing = false,
   isGhost = false,
   isHighlighted = false,
   size,
-  boardTheme = 'midnight',
+  boardTheme = 'sky_blue',
 }) => {
-  const themeConfig = BOARD_THEMES[boardTheme] || BOARD_THEMES.midnight;
+  const themeConfig = BOARD_THEMES[boardTheme] || BOARD_THEMES.sky_blue;
 
   if (!colorKey) {
     // Empty cell slot themed
@@ -136,33 +156,43 @@ export const GridBlockCell: React.FC<CellProps> = ({
     );
   }
 
+  const isDiamond = hasGem || blockType === 'diamond';
+  const isStar = blockType === 'star';
+  const isNeon = blockType === 'neon';
+
   return (
     <div
       style={size ? { width: `${size}px`, height: `${size}px` } : undefined}
-      className={`relative w-full h-full rounded-lg bg-gradient-to-br ${pieceColorTheme.gradient} ${pieceColorTheme.shadow} border-t border-l border-white/60 border-b border-r border-black/40 overflow-hidden transition-all transform-gpu ${
+      className={`relative w-full h-full rounded-lg overflow-hidden transition-all transform-gpu ${
         clearing
-          ? 'scale-110 brightness-200 ring-4 ring-white animate-ping duration-200'
-          : isHighlighted
-          ? 'brightness-125 ring-2 ring-white'
-          : 'hover:brightness-110'
+          ? 'scale-115 bg-gradient-to-r from-sky-300 via-teal-200 to-amber-200 shadow-[0_0_24px_rgba(56,189,248,1)] ring-4 ring-cyan-200 animate-ping duration-300'
+          : `bg-gradient-to-br ${pieceColorTheme.gradient} ${pieceColorTheme.shadow} border-t border-l border-white/60 border-b border-r border-black/40 ${
+              isHighlighted ? 'brightness-125 ring-2 ring-white' : 'hover:brightness-110'
+            }`
       }`}
     >
       {/* Top gloss sheen */}
       <div className="absolute top-0.5 left-0.5 right-0.5 h-1/3 bg-white/35 rounded-t-md pointer-events-none" />
 
-      {/* Gem icon inside if trapped gem */}
-      {hasGem ? (
+      {/* Multiple Block Types & 💎 Diamond Emoji Rendering */}
+      {isDiamond ? (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <svg
-            className="w-4 h-4 text-white drop-shadow-[0_0_6px_rgba(255,255,255,0.9)] animate-pulse"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-          >
-            <path d="M12 2L2 9l10 13 10-13-10-7zm0 3.2L18.4 9 12 17.5 5.6 9 12 5.2z" />
-          </svg>
+          <span className="text-base sm:text-lg select-none drop-shadow-[0_0_10px_rgba(56,189,248,1)] animate-pulse">
+            💎
+          </span>
+        </div>
+      ) : isStar ? (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <span className="text-sm sm:text-base select-none drop-shadow-[0_0_8px_rgba(251,191,36,1)] animate-bounce">
+            ⭐
+          </span>
+        </div>
+      ) : isNeon ? (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-3.5 h-3.5 rounded-full border-2 border-cyan-300 shadow-[0_0_8px_rgba(34,211,238,1)] animate-pulse" />
         </div>
       ) : (
-        /* Subtle core highlight */
+        /* Standard core highlight */
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-2 h-2 rounded-full bg-white/50 blur-[0.5px]" />
         </div>

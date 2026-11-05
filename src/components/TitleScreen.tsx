@@ -77,13 +77,13 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
   }, [onStart, selectedMode]);
 
   return (
-    <div className="relative w-full h-screen overflow-hidden flex flex-col justify-between items-center p-4 sm:p-6 bg-gradient-to-b from-[#080d1a] via-[#0b1329] to-[#060a14]">
-      {/* Ambient background particles / grid pattern */}
+    <div className="relative w-full h-screen overflow-hidden flex flex-col justify-between items-center p-4 sm:p-6 bg-gradient-to-b from-[#021c2d] via-[#04334a] to-[#011420]">
+      {/* Ambient background particles / grid pattern with Dark sky blue & greenish-blue glow */}
       <div
-        className="absolute inset-0 opacity-15 pointer-events-none"
+        className="absolute inset-0 opacity-20 pointer-events-none"
         style={{
           backgroundImage:
-            'radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.25) 0%, transparent 60%), linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px)',
+            'radial-gradient(circle at 50% 45%, rgba(14, 165, 233, 0.30) 0%, transparent 65%), radial-gradient(circle at 80% 20%, rgba(20, 184, 166, 0.25) 0%, transparent 50%), linear-gradient(rgba(56, 189, 248, 0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(20, 184, 166, 0.06) 1px, transparent 1px)',
           backgroundSize: '100% 100%, 48px 48px, 48px 48px',
         }}
       />

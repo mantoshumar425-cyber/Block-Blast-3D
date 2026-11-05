@@ -35,6 +35,24 @@ export interface ThemeConfig {
 }
 
 export const BOARD_THEMES: Record<BoardTheme, ThemeConfig> = {
+  sky_blue: {
+    id: 'sky_blue',
+    name: 'Dark Sky Blue 💙',
+    tagline: 'Oceanic deep sky blue & greenish-blue teal',
+    accentColor: '#0ea5e9',
+    previewGradient: 'from-sky-500 via-teal-600 to-cyan-950',
+    boardBg: 'bg-[#031d2e]/95',
+    boardBorder: 'border-cyan-800/80',
+    boardShadow: 'shadow-[0_14px_45px_rgba(14,165,233,0.35)]',
+    cellEmptyBg: 'bg-[#05293d]',
+    cellEmptyBorder: 'border-[#0a3f5c]/80',
+    cellDotColor: 'bg-cyan-400/35',
+    highlightGlow: 'ring-cyan-300 shadow-[0_0_26px_rgba(14,165,233,0.6)]',
+    ringGlow: 'ring-cyan-400',
+    particleClass: 'animate-float-starlight',
+    particleColor: 'rgba(56, 189, 248, 0.9)',
+    ambientGrad: 'radial-gradient(circle at 50% 50%, rgba(14, 165, 233, 0.18) 0%, rgba(20, 184, 166, 0.12) 50%, transparent 75%)',
+  },
   midnight: {
     id: 'midnight',
     name: 'Midnight',
@@ -126,7 +144,7 @@ export const STATIC_THEME_PARTICLES: ThemeParticle[] = [
 ];
 
 export function getSavedTheme(): BoardTheme {
-  if (typeof window === 'undefined') return 'midnight';
+  if (typeof window === 'undefined') return 'sky_blue';
   try {
     const saved = localStorage.getItem('blockblast_board_theme') as BoardTheme;
     if (saved && BOARD_THEMES[saved]) {
@@ -135,7 +153,7 @@ export function getSavedTheme(): BoardTheme {
   } catch {
     // fallback
   }
-  return 'midnight';
+  return 'sky_blue';
 }
 
 export function saveTheme(theme: BoardTheme): void {

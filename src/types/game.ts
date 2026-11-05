@@ -12,11 +12,16 @@ export type BlockColorKey =
   | 'blue'
   | 'yellow';
 
+export type BlockType = 'standard' | 'diamond' | 'neon' | 'star';
+export type BlockVisualTheme = 'diamond' | 'classic' | 'neon' | 'glass';
+
 export interface GridCell {
   colorKey: BlockColorKey;
   id: string;
   hasGem?: boolean;
+  blockType?: BlockType;
   clearing?: boolean;
+  clearingColor?: string;
 }
 
 export interface Piece {
@@ -26,6 +31,7 @@ export interface Piece {
   width: number;
   height: number;
   blockCount: number;
+  blockTypes?: BlockType[][];
 }
 
 export type GameState = 'TITLE_MENU' | 'PLAYING' | 'PAUSED' | 'GAME_OVER' | 'VICTORY';
@@ -67,5 +73,5 @@ export type SlidebarTab =
   | 'privacy_rights'
   | 'privacy_preference';
 
-export type BoardTheme = 'midnight' | 'neon' | 'solar' | 'emerald';
+export type BoardTheme = 'sky_blue' | 'midnight' | 'neon' | 'solar' | 'emerald';
 

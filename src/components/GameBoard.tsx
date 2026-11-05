@@ -26,9 +26,9 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   onCellClick,
   boardRef,
   shake,
-  theme = 'midnight',
+  theme = 'sky_blue',
 }) => {
-  const themeConfig = BOARD_THEMES[theme] || BOARD_THEMES.midnight;
+  const themeConfig = BOARD_THEMES[theme] || BOARD_THEMES.sky_blue;
 
   // Build a lookup for ghost cells
   const isGhostCell = (r: number, c: number): boolean => {
@@ -121,6 +121,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                   <GridBlockCell
                     colorKey={cell?.colorKey}
                     hasGem={cell?.hasGem}
+                    blockType={cell?.blockType}
                     clearing={cell?.clearing}
                     isHighlighted={isLit}
                     boardTheme={theme}

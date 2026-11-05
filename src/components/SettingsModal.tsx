@@ -7,7 +7,7 @@ import React from 'react';
 import { X, Volume2, Music, Vibrate, VolumeX, Palette, Sparkles, Check } from 'lucide-react';
 import { sounds } from '../utils/audio';
 import { BoardTheme } from '../types/game';
-import { BOARD_THEMES } from '../utils/themes';
+import { BOARD_THEMES, ThemeConfig } from '../utils/themes';
 
 interface SettingsModalProps {
   onClose: () => void;
@@ -75,7 +75,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </p>
 
           <div className="grid grid-cols-2 gap-2 pt-1">
-            {Object.values(BOARD_THEMES).map((theme) => {
+            {(Object.values(BOARD_THEMES) as ThemeConfig[]).map((theme) => {
               const isSelected = currentTheme === theme.id;
               return (
                 <button
