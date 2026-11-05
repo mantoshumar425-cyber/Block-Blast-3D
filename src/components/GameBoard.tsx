@@ -115,7 +115,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                   <GridBlockCell
                     colorKey={activePiece.colorKey}
                     isGhost={true}
-                    theme={theme}
+                    boardTheme={theme}
                   />
                 ) : (
                   <GridBlockCell
@@ -123,7 +123,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                     hasGem={cell?.hasGem}
                     clearing={cell?.clearing}
                     isHighlighted={isLit}
-                    theme={theme}
+                    boardTheme={theme}
                   />
                 )}
               </div>

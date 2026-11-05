@@ -93,7 +93,7 @@ interface CellProps {
   isGhost?: boolean;
   isHighlighted?: boolean;
   size?: number;
-  theme?: BoardTheme;
+  boardTheme?: BoardTheme;
 }
 
 export const GridBlockCell: React.FC<CellProps> = ({
@@ -103,9 +103,9 @@ export const GridBlockCell: React.FC<CellProps> = ({
   isGhost = false,
   isHighlighted = false,
   size,
-  theme = 'midnight',
+  boardTheme = 'midnight',
 }) => {
-  const themeConfig = BOARD_THEMES[theme] || BOARD_THEMES.midnight;
+  const themeConfig = BOARD_THEMES[boardTheme] || BOARD_THEMES.midnight;
 
   if (!colorKey) {
     // Empty cell slot themed
@@ -123,13 +123,13 @@ export const GridBlockCell: React.FC<CellProps> = ({
     );
   }
 
-  const theme = COLOR_THEMES[colorKey];
+  const pieceColorTheme = COLOR_THEMES[colorKey];
 
   if (isGhost) {
     return (
       <div
         style={size ? { width: `${size}px`, height: `${size}px` } : undefined}
-        className={`w-full h-full rounded-lg bg-gradient-to-br ${theme.gradient} opacity-60 ring-2 ring-white/80 animate-pulse flex items-center justify-center`}
+        className={`w-full h-full rounded-lg bg-gradient-to-br ${pieceColorTheme.gradient} opacity-60 ring-2 ring-white/80 animate-pulse flex items-center justify-center`}
       >
         <div className="w-2 h-2 rounded-full bg-white/80" />
       </div>
@@ -139,7 +139,7 @@ export const GridBlockCell: React.FC<CellProps> = ({
   return (
     <div
       style={size ? { width: `${size}px`, height: `${size}px` } : undefined}
-      className={`relative w-full h-full rounded-lg bg-gradient-to-br ${theme.gradient} ${theme.shadow} border-t border-l border-white/60 border-b border-r border-black/40 overflow-hidden transition-all transform-gpu ${
+      className={`relative w-full h-full rounded-lg bg-gradient-to-br ${pieceColorTheme.gradient} ${pieceColorTheme.shadow} border-t border-l border-white/60 border-b border-r border-black/40 overflow-hidden transition-all transform-gpu ${
         clearing
           ? 'scale-110 brightness-200 ring-4 ring-white animate-ping duration-200'
           : isHighlighted

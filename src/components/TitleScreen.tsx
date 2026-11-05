@@ -24,6 +24,8 @@ import { PWAInstallButton } from './PWAInstallButton';
 import { getTodayChallenge } from '../utils/daily';
 import { SlidebarTab } from '../types/game';
 import { DailyStreakIndicator } from './DailyStreakIndicator';
+import { DailyMissionsCard } from './DailyMissionsCard';
+import { getDailyMissions } from '../utils/dailyMissions';
 
 interface TitleScreenProps {
   onStart: (mode: GameMode) => void;
@@ -352,10 +354,13 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
           )}
 
           {selectedMode === 'daily' && (
-            <DailyStreakIndicator
-              dailyInfo={dailyInfo}
-              onOpenLeaderboard={() => onOpenSlidebar('leaderboard')}
-            />
+            <div className="flex flex-col gap-2.5">
+              <DailyStreakIndicator
+                dailyInfo={dailyInfo}
+                onOpenLeaderboard={() => onOpenSlidebar('leaderboard')}
+              />
+              <DailyMissionsCard missions={getDailyMissions()} />
+            </div>
           )}
         </div>
 
